@@ -2,7 +2,7 @@ const express = require('express')
 const app = express()
 const port = 3000
 
-const router = require('app/router.js')
+const router = require('./app/router')
 
 app.use(express.static('app/public'))
 // setting the views folder locations
@@ -11,9 +11,7 @@ app.set('views', 'app/views')
 app.set('view engine', 'ejs')
 
 // homepage GET request
-app.get('/', (req, res) => {
-  res.render('home-guest')
-})
+app.use('/', router)
 
 // listen to incoming requests
 app.listen(port, () => console.log(`Example app listening on port ${port}!`))
