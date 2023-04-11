@@ -2,6 +2,8 @@ const express = require('express')
 const app = express()
 const port = 3000
 
+const router = require('app/router.js')
+
 app.use(express.static('app/public'))
 // setting the views folder locations
 app.set('views', 'app/views')
