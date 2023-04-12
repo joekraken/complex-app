@@ -7,6 +7,24 @@ let User = function(data) {
   this.data = data
   this.errors = []
 }
+
+// clean up user input, so inputs are string
+// no arrays, no code snippets, etc
+User.prototype.cleanUp = function () {
+  // check inputs are strings
+  if (typeof(this.data.username) != 'string') {this.data.username = ''}
+  if (typeof(this.data.email) != 'string') {this.data.email = ''}
+  if (typeof(this.data.password) != 'string') {this.data.password = ''}
+
+  // purify data, remove bogus properties
+  this.data = {
+    username: this.data.username.trim().toLowerCase(),
+    email: this.data.email.trim().toLowerCase(),
+    password: this.data.password
+  }
+}
+
+// validate user input
 User.prototype.validate = function() {
   if (this.data.username == '') {this.errors.push('Username must be provided')}
   if (this.data.username != "" && !validator.isAlphanumeric(this.data.username)) {this.errors.push('Username can only contain letters and numbers')}
@@ -19,6 +37,7 @@ User.prototype.validate = function() {
 // all instances can access this function
 User.prototype.register = function() {
   // 1 : validate user input
+  this.cleanUp()
   this.validate()
 
   // 2 : if no validation errors, then save user data to db
