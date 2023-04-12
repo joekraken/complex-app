@@ -4,6 +4,10 @@ const port = 3000
 
 const router = require('./app/router')
 
+// add user input to request data
+app.use(express.urlencoded({extended: false}))
+app.use(express.json()) // format request data as json
+
 app.use(express.static('app/public'))
 // setting the views folder locations
 app.set('views', 'app/views')
