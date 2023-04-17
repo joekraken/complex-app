@@ -6,7 +6,13 @@ exports.logout = () => {}
 
 exports.register = (req, res) => {
   let user = new User(req.body)
-  res.send('thanks for new registration')
+  user.register()
+  // check for errors
+  if (user.errors.length) {
+    res.send(user.errors)
+  } else {
+    res.send('thanks for new registration')
+  }
 }
 
 exports.home = (req, res) => {
