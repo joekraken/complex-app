@@ -17,5 +17,7 @@ app.set('view engine', 'ejs')
 // homepage GET request
 app.use('/', router)
 
+// export this app, instead of listening to requests
+module.exports = app
 // listen to incoming requests
-app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+// app.listen(port, () => console.log(`Example app listening on port ${port}!`))

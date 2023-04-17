@@ -1,6 +1,7 @@
 // function() this keyword points to calling object
 // this - references the userController object
 
+const usersCollection = require('../../db').collection('users')
 const validator = require('validator')
 
 let User = function(data) {
@@ -36,11 +37,14 @@ User.prototype.validate = function() {
 
 // all instances can access this function
 User.prototype.register = function() {
-  // 1 : validate user input
+  // validate user input
   this.cleanUp()
   this.validate()
 
-  // 2 : if no validation errors, then save user data to db
+  // if no validation errors, then save user data to db
+  if (this.errors.length == 0) {
+    usersCollection.insertOne(this.data)
+  }
 }
 
 module.exports = User
