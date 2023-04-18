@@ -1,8 +1,8 @@
+const dotenv = require('dotenv')
+dotenv.config()
+const port = process.env.PORT
 const {MongoClient} = require('mongodb')
-const port = 3000
-const uri = 'mongodb+srv://student:evEry83kiwi@cluster0.ud4v6.azure.mongodb.net/complexApp?retryWrites=true&w=majority'
-
-const client = new MongoClient(uri)
+const client = new MongoClient(process.env.CONNECTIONSTRING)
 
 async function startDb() {
   await client.connect()
