@@ -4,7 +4,7 @@
   "description": "Building a JS app for personal use, with todo feature, messaging system, and user login security.  Leveraging JavaScript, Express, Node, and Mongodb.",
   "main": "index.js",
   "scripts": {
-    "watch": "nodemon app.js",
+    "watch": "nodemon db.js",
     "dev": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -12,8 +12,10 @@
   "author": "joe kirkbride",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^16.0.3",
     "ejs": "^3.1.9",
     "express": "^4.18.2",
+    "mongodb": "^5.2.0",
     "nodemon": "^2.0.22",
     "validator": "^13.9.0"
   }
