@@ -35,7 +35,23 @@ User.prototype.validate = function() {
   if (!validator.isLength(this.data.username, {min: 3, max: 30})) {this.errors.push('Username must be 3 to 30 characters long')}
 }
 
+// login an existing user
+User.prototype.login = function() {
+  // send a Promise, with an arrow function to maintain this keyword
+  return new Promise(async (resolve, reject) => {
+    this.cleanUp()
+    const getExistingUser = await usersCollection.findOne({username: this.data.username})
+    if (getExistingUser && getExistingUser.password == this.data.password) {
+      resolve(`Success! User ${this.data.username} logged in`)
+    } else {
+      reject('Oops! Invalid username and/or password')
+    }
+  })
+
+}
+
 // all instances can access this function
+// register a new user
 User.prototype.register = function() {
   // validate user input
   this.cleanUp()
