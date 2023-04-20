@@ -4,6 +4,8 @@ exports.login = (req, res) => {
   let user = new User(req.body) // user object model
   // login returns a Promise
   user.login().then(function(message) {
+    // server stores unique session data
+    req.session.user = {username: user.data.username}
     res.send(message)
   }).catch(function(error) {
     res.send(error)
@@ -24,5 +26,10 @@ exports.register = (req, res) => {
 }
 
 exports.home = (req, res) => {
-  res.render('home-guest')
+  // confirm user is logged in
+  if (req.session.user) {
+    res.send('welcome to the app')
+  } else {
+    res.render('home-guest')
+  }
 }

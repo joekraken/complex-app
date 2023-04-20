@@ -1,7 +1,8 @@
 // function() this keyword points to calling object
 // this - references the userController object
 
-const usersCollection = require('../../db').collection('users')
+const bcrypt = require('bcryptjs') // hashing text
+const usersCollection = require('../../db').db().collection('users')
 const validator = require('validator')
 
 let User = function(data) {
@@ -31,7 +32,7 @@ User.prototype.validate = function() {
   if (this.data.username != "" && !validator.isAlphanumeric(this.data.username)) {this.errors.push('Username can only contain letters and numbers')}
   if (!validator.isEmail(this.data.email)) {this.errors.push('Valid email must be provided')}
   if (this.data.password == '') {this.errors.push('Password must be provided')}
-  if (!validator.isLength(this.data.password, {min: 12, max: 100})) {this.errors.push('Password must be 12 to 100 characters long')}
+  if (!validator.isLength(this.data.password, {min: 12, max: 50})) {this.errors.push('Password must be 12 to 50 characters long')}
   if (!validator.isLength(this.data.username, {min: 3, max: 30})) {this.errors.push('Username must be 3 to 30 characters long')}
 }
 
@@ -40,8 +41,10 @@ User.prototype.login = function() {
   // send a Promise, with an arrow function to maintain this keyword
   return new Promise(async (resolve, reject) => {
     this.cleanUp()
+    // get user from database
     const getExistingUser = await usersCollection.findOne({username: this.data.username})
-    if (getExistingUser && getExistingUser.password == this.data.password) {
+    // check user exists and password is valid
+    if (getExistingUser && bcrypt.compareSync(this.data.password, getExistingUser.password)) {
       resolve(`Success! User ${this.data.username} logged in`)
     } else {
       reject('Oops! Invalid username and/or password')
@@ -50,7 +53,6 @@ User.prototype.login = function() {
 
 }
 
-// all instances can access this function
 // register a new user
 User.prototype.register = function() {
   // validate user input
@@ -59,6 +61,9 @@ User.prototype.register = function() {
 
   // if no validation errors, then save user data to db
   if (this.errors.length == 0) {
+    // hash text
+    let salt = bcrypt.genSaltSync(10) // generate salt
+    this.data.password = bcrypt.hashSync(this.data.password, salt)
     usersCollection.insertOne(this.data)
   }
 }
