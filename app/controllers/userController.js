@@ -28,7 +28,7 @@ exports.register = (req, res) => {
 exports.home = (req, res) => {
   // confirm user is logged in
   if (req.session.user) {
-    res.send('welcome to the app')
+    res.render('home-dashboard', {username: req.session.user.username})
   } else {
     res.render('home-guest')
   }
