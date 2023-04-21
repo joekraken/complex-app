@@ -7,8 +7,9 @@ exports.login = (req, res) => {
     // server stores user Session data
     req.session.user = {username: user.data.username}
     req.session.save(()  => res.redirect('/'))
-  }).catch(function(error) {
-    res.send(error)
+  }).catch(function(e) {
+    req.flash('errors', e) // store error messages in Session
+    req.session.save(() => res.redirect('/')) // manually save to db, then redirct
   })
 }
 
@@ -33,6 +34,7 @@ exports.home = (req, res) => {
   if (req.session.user) {
     res.render('home-dashboard', {username: req.session.user.username})
   } else {
-    res.render('home-guest')
+    // render home page, and retrieve possible flash error messages
+    res.render('home-guest', {errors: req.flash('errors')})
   }
 }

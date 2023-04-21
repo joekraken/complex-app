@@ -2,6 +2,7 @@ const express = require('express')
 const session = require('express-session')
 const MongoStore = require('connect-mongo')
 const router = require('./app/router')
+const flash = require('connect-flash')
 
 const app = express()
 
@@ -17,6 +18,7 @@ let sessionOptions = session({
 })
 
 app.use(sessionOptions)
+app.use(flash()) // add flash feature
 
 // add user input to request data
 app.use(express.urlencoded({extended: false}))
