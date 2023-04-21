@@ -3,16 +3,19 @@ const User = require('../models/User') // User model
 exports.login = (req, res) => {
   let user = new User(req.body) // user object model
   // login returns a Promise
-  user.login().then(function(message) {
-    // server stores unique session data
+  user.login().then(function() {
+    // server stores user Session data
     req.session.user = {username: user.data.username}
-    res.send(message)
+    req.session.save(()  => res.redirect('/'))
   }).catch(function(error) {
     res.send(error)
   })
 }
 
-exports.logout = () => {}
+exports.logout = (req, res) => {
+  // delete the user Session store, callback runs when Session is destroyed
+  req.session.destroy(() => res.redirect('/'))
+}
 
 exports.register = (req, res) => {
   let user = new User(req.body) // user object model
