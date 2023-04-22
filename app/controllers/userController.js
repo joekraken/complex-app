@@ -9,7 +9,7 @@ exports.login = (req, res) => {
     req.session.save(()  => res.redirect('/'))
   }).catch(function(e) {
     req.flash('errors', e) // store error messages in Session
-    req.session.save(() => res.redirect('/')) // manually save to db, then redirct
+    req.session.save(() => res.redirect('/')) // manually save to db, then redirect
   })
 }
 
@@ -20,18 +20,14 @@ exports.logout = (req, res) => {
 
 exports.register = (req, res) => {
   let user = new User(req.body) // user object model
-  user.register()
-  // check for errors
-  if (user.errors.length) {
-    user.errors.forEach(e => {})
+  user.register().then(() => {
+    req.session.user = {username: user.data.username}
+    req.session.save(()  => res.redirect('/'))
+  }).catch((regErrors) => {
     // show errors on homepage
-    user.errors.forEach(e => req.flash('regErrors', e))
+    regErrors.forEach(e => req.flash('regErrors', e))
     req.session.save(() => res.redirect('/'))
-  } else {
-    res.render('home-dashboard', {username: req.session.user.username})
-  }
-
-
+  })
 }
 
 exports.home = (req, res) => {
