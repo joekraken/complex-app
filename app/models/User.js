@@ -4,6 +4,7 @@
 const bcrypt = require('bcryptjs') // hashing text
 const usersCollection = require('../../db').db().collection('users')
 const validator = require('validator')
+const md5 = require('md5')
 
 let User = function(data) {
   this.data = data
@@ -35,19 +36,16 @@ User.prototype.validate = function() {
     if (!validator.isEmail(this.data.email)) {this.errors.push('Valid email must be provided')}
     if (this.data.password == '') {this.errors.push('Password must be provided')}
     if (this.data.password && !validator.isLength(this.data.password, {min: 12, max: 50})) {this.errors.push('Password must be 12 to 50 characters long')}
-  
     // if username is valid, check username exists
     if (this.data.username.length > 2 && this.data.username.length < 31 && validator.isAlphanumeric(this.data.username)) {
       let usernameExists = await usersCollection.findOne({username: this.data.username})
       if (usernameExists) {this.errors.push('Username is already taken')}
     }
-  
     // if email is valid, check email exists
     if (validator.isEmail(this.data.email)) {
       let emailExists = await usersCollection.findOne({email: this.data.email})
       if (emailExists) {this.errors.push('Email is already taken')}
     }
-
     resolve()
   })
 }
@@ -61,6 +59,8 @@ User.prototype.login = function() {
     const getExistingUser = await usersCollection.findOne({username: this.data.username})
     // check user exists and password is valid
     if (getExistingUser && bcrypt.compareSync(this.data.password, getExistingUser.password)) {
+      this.data = getExistingUser
+      this.getAvatar()
       resolve(`Success! User ${this.data.username} logged in`)
     } else {
       reject('Oops! Invalid username and/or password')
@@ -82,11 +82,17 @@ User.prototype.register = function() {
       let salt = bcrypt.genSaltSync(10) // generate salt
       this.data.password = bcrypt.hashSync(this.data.password, salt)
       await usersCollection.insertOne(this.data)
+      this.getAvatar()
       resolve()
     } else {
       reject(this.errors)
     }
   })
+}
+
+// get user profile icon
+User.prototype.getAvatar = function() {
+  this.avatar = `https://gravatar.com/avatar/${md5(this.data.email)}?s=128`
 }
 
 module.exports = User
