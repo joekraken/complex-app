@@ -1,5 +1,18 @@
 const User = require('../models/User') // User model
 
+// user mustBeLoggedIn
+exports.isLoggedIn = (req, res, next) => {
+  // verify user is logged in
+  if (req.session.user) {
+    // execute next function in the route
+    next()
+  } else {
+    // not logged in, save error message to flash
+    req.flash('errors', 'You must be logged in to perform that action')
+    req.session.save(() => res.redirect('/'))
+  }
+}
+
 exports.login = (req, res) => {
   let user = new User(req.body) // user object model
   // login returns a Promise
