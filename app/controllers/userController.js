@@ -18,7 +18,7 @@ exports.login = (req, res) => {
   // login returns a Promise
   user.login().then(function() {
     // server stores user Session data
-    req.session.user = {username: user.data.username, avatar: user.avatar}
+    req.session.user = {username: user.data.username, avatar: user.avatar, _id: user.data._id}
     req.session.save(()  => res.redirect('/'))
   }).catch(function(e) {
     req.flash('errors', e) // store error messages in Session
@@ -34,7 +34,7 @@ exports.logout = (req, res) => {
 exports.register = (req, res) => {
   let user = new User(req.body) // user object model
   user.register().then(() => {
-    req.session.user = {username: user.data.username, avatar: user.avatar}
+    req.session.user = {username: user.data.username, avatar: user.avatar, _id: user.data._id}
     req.session.save(()  => res.redirect('/'))
   }).catch((regErrors) => {
     // show errors on homepage
