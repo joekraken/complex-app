@@ -77,7 +77,6 @@ Post.findSingleById = function(id) {
     })
     // check post is not empty
     if (posts.length) {
-      console.log(posts[0])
       resolve(posts[0])
     } else {
       reject()
