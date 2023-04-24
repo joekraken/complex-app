@@ -1,5 +1,6 @@
 const ObjectId = require('mongodb').ObjectId
 const postsCollection = require('../../db').db().collection('posts')
+const User = require('./User')
 
 let Post = function(data, userId) {
   this.data = data
@@ -53,10 +54,31 @@ Post.findSingleById = function(id) {
       reject()
       return
     }
-    let post = await postsCollection.findOne({_id: new ObjectId(id)})
+    // retrieve the post associated with the id and author
+    let posts = await postsCollection.aggregate([
+      {$match: {_id: new ObjectId(id)}},
+      {$lookup: {from: 'users', localField: 'author', foreignField: '_id', as: 'authorInfo'}},
+      {$project: {
+        title: 1,
+        body: 1,
+        createdDate: 1,
+        author: {$arrayElemAt: ['$authorInfo', 0]}
+      }}
+    ]).toArray()
+    // clean up author property in post object
+    // set author property to have username and gravatar icon
+    // .map() creates a new array
+    posts = posts.map(function(post) {
+      post.author = {
+        username: post.author.username,
+        avatar: new User(post.author, true).avatar
+      }
+      return post
+    })
     // check post is not empty
-    if (post) {
-      resolve(post)
+    if (posts.length) {
+      console.log(posts[0])
+      resolve(posts[0])
     } else {
       reject()
     }

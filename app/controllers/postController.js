@@ -22,7 +22,7 @@ exports.viewSinglePost = async (req, res) => {
   try {
     let post = await Post.findSingleById(req.params.id)
     res.render('single-post-screen', {post: post})
-  } catch (error) {
-    res.send("404 page not found template goes here")
+  } catch (e) {
+    res.render('404')
   }
 }
