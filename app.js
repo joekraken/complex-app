@@ -20,6 +20,13 @@ let sessionOptions = session({
 app.use(sessionOptions)
 app.use(flash()) // add flash feature
 
+app.use((req, res, next) => {
+  // make user session data accessible from any .ejs template
+  // thus remove duplication
+  res.locals.user = req.session.user
+  next()
+})
+
 // add user input to request data
 app.use(express.urlencoded({extended: false}))
 app.use(express.json()) // format request data as json
