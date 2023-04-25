@@ -47,16 +47,9 @@ Post.prototype.create = function() {
   })
 }
 
-Post.findSingleById = function(id) {
+Post.queryPosts = function(opsArray) {
   return new Promise(async (resolve, reject) => {
-    // validate id is a not string or invalid mongo _id
-    if (typeof(id) != 'string' || !ObjectId.isValid(id)) {
-      reject()
-      return
-    }
-    // retrieve the post associated with the id and author
-    let posts = await postsCollection.aggregate([
-      {$match: {_id: new ObjectId(id)}},
+    let aggregateOps = opsArray.concat([
       {$lookup: {from: 'users', localField: 'author', foreignField: '_id', as: 'authorInfo'}},
       {$project: {
         title: 1,
@@ -64,7 +57,9 @@ Post.findSingleById = function(id) {
         createdDate: 1,
         author: {$arrayElemAt: ['$authorInfo', 0]}
       }}
-    ]).toArray()
+    ])
+    // retrieve the post associated with the id and author
+    let posts = await postsCollection.aggregate(aggregateOps).toArray()
     // clean up author property in post object
     // set author property to have username and gravatar icon
     // .map() creates a new array
@@ -75,6 +70,19 @@ Post.findSingleById = function(id) {
       }
       return post
     })
+
+    resolve(posts)
+  })
+}
+
+Post.findSingleById = function(postId) {
+  return new Promise(async (resolve, reject) => {
+    // validate id is a not string or invalid mongo _id
+    if (typeof(postId) != 'string' || !ObjectId.isValid(postId)) {
+      reject()
+      return
+    }
+    let posts = await Post.queryPosts([{$match: {_id: new ObjectId(postId)}}])
     // check post is not empty
     if (posts.length) {
       resolve(posts[0])
@@ -82,6 +90,13 @@ Post.findSingleById = function(id) {
       reject()
     }
   })
+}
+
+Post.findByAuthorId = function(authorId) {
+  return Post.queryPosts([
+    {$match: {author: authorId}},
+    {$sort: {createdDate: -1}}
+  ])
 }
 
 module.exports = Post
