@@ -6,9 +6,11 @@ const usersCollection = require('../../db').db().collection('users')
 const validator = require('validator')
 const md5 = require('md5')
 
-let User = function(data) {
+let User = function(data, doGetAvatar) {
   this.data = data
   this.errors = []
+  if (doGetAvatar == undefined) {doGetAvatar == false}
+  if (doGetAvatar) (this.getAvatar())
 }
 
 // clean up user input, so inputs are string
