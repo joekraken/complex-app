@@ -20,8 +20,18 @@ exports.create = (req, res) => {
 // retrieve a Post with id from Model
 exports.viewSinglePost = async (req, res) => {
   try {
-    let post = await Post.findSingleById(req.params.id)
+    let post = await Post.findSingleById(req.params.id, req.visitorId)
     res.render('single-post-screen', {post: post})
+  } catch (e) {
+    res.render('404')
+  }
+}
+
+// view the edit post screen
+exports.viewEditScreen = async (req, res) => {
+  try {
+    let post = await Post.findSingleById(req.params.id)
+    res.render('edit-post', {post: post})
   } catch (e) {
     res.render('404')
   }

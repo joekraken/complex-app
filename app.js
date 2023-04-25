@@ -21,8 +21,11 @@ app.use(sessionOptions)
 app.use(flash()) // add flash feature
 
 app.use((req, res, next) => {
+  // make current user id available on req obj
+  if (req.session.user) {req.visitorId = req.session.user._id}
+  else {req.visitorId = 0}
   // make user session data accessible from any .ejs template
-  // thus remove duplication
+  // thus remove duplicate code
   res.locals.user = req.session.user
   next()
 })

@@ -47,7 +47,7 @@ Post.prototype.create = function() {
   })
 }
 
-Post.queryPosts = function(opsArray) {
+Post.queryPosts = function(opsArray, visitorId) {
   return new Promise(async (resolve, reject) => {
     let aggregateOps = opsArray.concat([
       {$lookup: {from: 'users', localField: 'author', foreignField: '_id', as: 'authorInfo'}},
@@ -55,6 +55,7 @@ Post.queryPosts = function(opsArray) {
         title: 1,
         body: 1,
         createdDate: 1,
+        authorId: '$author',
         author: {$arrayElemAt: ['$authorInfo', 0]}
       }}
     ])
@@ -64,6 +65,7 @@ Post.queryPosts = function(opsArray) {
     // set author property to have username and gravatar icon
     // .map() creates a new array
     posts = posts.map(function(post) {
+      post.isVisitorOwner = post.authorId.equals(visitorId)
       post.author = {
         username: post.author.username,
         avatar: new User(post.author, true).avatar
@@ -75,14 +77,14 @@ Post.queryPosts = function(opsArray) {
   })
 }
 
-Post.findSingleById = function(postId) {
+Post.findSingleById = function(postId, visitorId) {
   return new Promise(async (resolve, reject) => {
     // validate id is a not string or invalid mongo _id
     if (typeof(postId) != 'string' || !ObjectId.isValid(postId)) {
       reject()
       return
     }
-    let posts = await Post.queryPosts([{$match: {_id: new ObjectId(postId)}}])
+    let posts = await Post.queryPosts([{$match: {_id: new ObjectId(postId)}}], visitorId)
     // check post is not empty
     if (posts.length) {
       resolve(posts[0])
