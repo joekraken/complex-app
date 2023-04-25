@@ -1,6 +1,7 @@
 const User = require('../models/User') // User model
+const Post = require('../models/Post') // Post model
 
-// user mustBeLoggedIn
+// verify user is logged in, mustBeLoggedIn
 exports.isLoggedIn = (req, res, next) => {
   // verify user is logged in
   if (req.session.user) {
@@ -13,6 +14,7 @@ exports.isLoggedIn = (req, res, next) => {
   }
 }
 
+// login
 exports.login = (req, res) => {
   let user = new User(req.body) // user object model
   // login returns a Promise
@@ -26,11 +28,13 @@ exports.login = (req, res) => {
   })
 }
 
+// logout
 exports.logout = (req, res) => {
   // delete the user Session store, callback runs when Session is destroyed
   req.session.destroy(() => res.redirect('/'))
 }
 
+// register
 exports.register = (req, res) => {
   let user = new User(req.body) // user object model
   user.register().then(() => {
@@ -43,6 +47,7 @@ exports.register = (req, res) => {
   })
 }
 
+// user dashboard or guest page
 exports.home = (req, res) => {
   // confirm user is logged in
   if (req.session.user) {
@@ -51,4 +56,29 @@ exports.home = (req, res) => {
     // render home page, and retrieve possible flash error messages
     res.render('home-guest', {errors: req.flash('errors'), regErrors: req.flash('regErrors')})
   }
+}
+
+// check user does exist
+exports.ifUserExists = (req, res, next) => {
+  User.findByUsername(req.params.username).then((userDoc) => {
+    req.profileUser = userDoc
+    next()
+  }).catch(() => {
+    res.render('404')
+  })
+}
+
+// list of post for a user
+exports.profilePostsScreen = (req, res) => {
+  // get posts by author id
+  Post.findByAuthorId(req.profileUser._id).then((posts) => {
+    res.render('profile', {
+      profileUsername: req.profileUser.username,
+      profileAvatar: req.profileUser.avatar,
+      posts: posts
+    })
+  }).catch(() => {
+    res.render('404')
+  })
+
 }
