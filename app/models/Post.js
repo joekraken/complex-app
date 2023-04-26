@@ -1,6 +1,7 @@
 const ObjectId = require('mongodb').ObjectId
 const postsCollection = require('../../db').db().collection('posts')
 const User = require('./User')
+const sanitizeHTML = require('sanitize-html')
 
 let Post = function(data, userId, postId) {
   this.data = data
@@ -14,9 +15,10 @@ Post.prototype.cleanUp = function() {
   if(typeof(this.data.title) != 'string') {this.data.title = ''}
   if(typeof(this.data.body) != 'string') {this.data.body = ''}
   // purify data, remove bogus properties
+  // sanitize title and body, by removing HTML, ok for markdown
   this.data = {
-    title: this.data.title.trim(),
-    body: this.data.body.trim(),
+    title: sanitizeHTML(this.data.title.trim(), {allowedTags: [], allowedAttributes: []}),
+    body: sanitizeHTML(this.data.body.trim(), {allowedTags: [], allowedAttributes: []}),
     createdDate: new Date(),
     author: new ObjectId(this.userId)
   }

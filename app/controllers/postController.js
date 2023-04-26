@@ -54,9 +54,9 @@ exports.viewSinglePost = async (req, res) => {
 // view the edit post screen
 exports.viewEditScreen = async (req, res) => {
   try {
-    let post = await Post.findSingleById(req.params.id)
+    let post = await Post.findSingleById(req.params.id, req.visitorId)
     // check user is authored this post
-    if (post.authorId == req.visitorId) {
+    if (post.isVisitorOwner) {
       res.render('edit-post', {post: post})
     } else {
       // user doesnt own post
@@ -64,7 +64,7 @@ exports.viewEditScreen = async (req, res) => {
       req.session.save(() => res.redirect('/'))
     }
 
-  } catch (e) {
+  } catch {
     res.render('404')
   }
 }
