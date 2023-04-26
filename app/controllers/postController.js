@@ -8,12 +8,34 @@ exports.createPostScreen = (req, res) => {
 // create post, send request to Model to save post 
 exports.create = (req, res) => {
   let post = new Post(req.body, req.session.user._id)
-  post.create().then(function() {
+  post.create().then(() => {
     // save post to database
     res.send('new post created')
-  }).catch(function(errors) {
+  }).catch((errors) => {
     // errors, post not saved
     res.send(errors)
+  })
+}
+
+// update an existing post
+exports.edit = (req, res) => {
+  let post = new Post(req.body, req.visitorId, req.params.id)
+  post.update().then((status) => {
+    // post successfully update or validation error
+    if (status == 'success') {
+      // successful post update
+      req.flash('success', 'Post successfully updated')
+      //req.session.save(() => res.redirect(`/post/${req.params.id}/edit`))
+    } else {
+      // validation errors, redirect back to edit post page
+      post.errors.forEach(error => req.flash('errors'))
+      //req.session.save(() => res.redirect(`/post/${req.params.id}/edit`))
+    }
+    req.session.save(() => res.redirect(`/post/${req.params.id}/edit`))
+  }).catch(() => {
+    // post doesn't exist or visitor is not owner of the post to update
+    req.flash('errors', 'you do not have persmission to perform that action')
+    req.session.save(() => res.redirect('/'))
   })
 }
 

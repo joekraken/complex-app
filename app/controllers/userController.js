@@ -54,7 +54,7 @@ exports.home = (req, res) => {
     res.render('home-dashboard')
   } else {
     // render home page, and retrieve possible flash error messages
-    res.render('home-guest', {errors: req.flash('errors'), regErrors: req.flash('regErrors')})
+    res.render('home-guest', {regErrors: req.flash('regErrors')})
   }
 }
 

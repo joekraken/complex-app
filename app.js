@@ -21,11 +21,13 @@ app.use(sessionOptions)
 app.use(flash()) // add flash feature
 
 app.use((req, res, next) => {
+  // make flash messages available to all ejs templates
+  res.locals.errors = req.flash('errors')
+  res.locals.success = req.flash('success')
   // make current user id available on req obj
   if (req.session.user) {req.visitorId = req.session.user._id}
   else {req.visitorId = 0}
   // make user session data accessible from any .ejs template
-  // thus remove duplicate code
   res.locals.user = req.session.user
   next()
 })
