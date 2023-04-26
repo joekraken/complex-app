@@ -39,7 +39,7 @@ Post.prototype.create = function() {
     if (!this.errors.length) {
       // save post to db
       postsCollection.insertOne(this.data).then((info) => {
-        resolve(info.insertedId)
+      resolve(info.insertedId)
       }).catch(() => {
         this.errors.push('Please try again later')
         reject(this.errors)
@@ -139,6 +139,24 @@ Post.findByAuthorId = function(authorId) {
     {$match: {author: authorId}},
     {$sort: {createdDate: -1}}
   ])
+}
+
+// delete post from database
+Post.delete = function(postId, currentUserId) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let post = await Post.findSingleById(postId, currentUserId)
+      // check user owns post to delete
+      if (post.isVisitorOwner) {
+        await postsCollection.deleteOne({_id: new ObjectId(postId)})
+        resolve()
+      } else {
+        reject()
+      }
+    } catch {
+      reject()
+    }
+  })
 }
 
 module.exports = Post

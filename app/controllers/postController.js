@@ -27,11 +27,9 @@ exports.edit = (req, res) => {
     if (status == 'success') {
       // successful post update
       req.flash('success', 'Post successfully updated')
-      //req.session.save(() => res.redirect(`/post/${req.params.id}/edit`))
     } else {
       // validation errors, redirect back to edit post page
       post.errors.forEach(error => req.flash('errors'))
-      //req.session.save(() => res.redirect(`/post/${req.params.id}/edit`))
     }
     req.session.save(() => res.redirect(`/post/${req.params.id}/edit`))
   }).catch(() => {
@@ -67,4 +65,16 @@ exports.viewEditScreen = async (req, res) => {
   } catch {
     res.render('404')
   }
+}
+
+exports.delete = (req, res) => {
+  Post.delete(req.params.id, req.visitorId).then(() => {
+    // user owns post that was deleted
+    req.flash('success', 'Post successfully deleted')
+    req.session.save(() => res.redirect(`/profile/${req.session.user.username}`))
+  }).catch(() => {
+    // user not owner of post to delete
+    req.flash('errors', 'you do not have persmission to perform that action')
+    req.session.save(() => res.redirect('/'))
+  })
 }
