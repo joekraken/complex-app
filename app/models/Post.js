@@ -1,9 +1,11 @@
 const ObjectId = require('mongodb').ObjectId
 const postsCollection = require('../../db').db().collection('posts')
 const User = require('./User')
+const sanitizeHTML = require('sanitize-html')
 
-let Post = function(data, userId) {
+let Post = function(data, userId, postId) {
   this.data = data
+  this.requestedPostId = postId
   this.userId = userId
   this.errors = []
 }
@@ -13,9 +15,10 @@ Post.prototype.cleanUp = function() {
   if(typeof(this.data.title) != 'string') {this.data.title = ''}
   if(typeof(this.data.body) != 'string') {this.data.body = ''}
   // purify data, remove bogus properties
+  // sanitize title and body, by removing HTML, ok for markdown
   this.data = {
-    title: this.data.title.trim(),
-    body: this.data.body.trim(),
+    title: sanitizeHTML(this.data.title.trim(), {allowedTags: [], allowedAttributes: []}),
+    body: sanitizeHTML(this.data.body.trim(), {allowedTags: [], allowedAttributes: []}),
     createdDate: new Date(),
     author: new ObjectId(this.userId)
   }
@@ -35,8 +38,8 @@ Post.prototype.create = function() {
     // if no errors, then save post to database
     if (!this.errors.length) {
       // save post to db
-      postsCollection.insertOne(this.data).then(() => {
-        resolve()
+      postsCollection.insertOne(this.data).then((info) => {
+      resolve(info.insertedId)
       }).catch(() => {
         this.errors.push('Please try again later')
         reject(this.errors)
@@ -47,7 +50,44 @@ Post.prototype.create = function() {
   })
 }
 
-Post.queryPosts = function(opsArray) {
+// updated a post in the database
+Post.prototype.update = function() {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let post = await Post.findSingleById(this.requestedPostId, this.userId)
+      // check user authored the post
+      if (post.isVisitorOwner) {
+        // update database
+        let status = await this.updateDb()
+        resolve(status)
+      } else {
+        // invalid user
+        reject()
+      }
+    } catch {
+      reject()
+    }
+  })
+}
+
+Post.prototype.updateDb = function() {
+  return new Promise(async (resolve, reject) => {
+    this.cleanUp()
+    this.validate()
+    // check validation errors
+    if (!this.errors.length) {
+      // document fields to update
+      const updateDoc = {$set: {title: this.data.title, body: this.data.body}}
+      // request mongo to update
+      await postsCollection.findOneAndUpdate({_id: new ObjectId(this.requestedPostId)}, updateDoc)
+      resolve('success')
+    } else {
+      resolve('failure')
+    }
+  })
+}
+
+Post.queryPosts = function(opsArray, visitorId) {
   return new Promise(async (resolve, reject) => {
     let aggregateOps = opsArray.concat([
       {$lookup: {from: 'users', localField: 'author', foreignField: '_id', as: 'authorInfo'}},
@@ -55,6 +95,7 @@ Post.queryPosts = function(opsArray) {
         title: 1,
         body: 1,
         createdDate: 1,
+        authorId: '$author',
         author: {$arrayElemAt: ['$authorInfo', 0]}
       }}
     ])
@@ -64,6 +105,7 @@ Post.queryPosts = function(opsArray) {
     // set author property to have username and gravatar icon
     // .map() creates a new array
     posts = posts.map(function(post) {
+      post.isVisitorOwner = post.authorId.equals(visitorId)
       post.author = {
         username: post.author.username,
         avatar: new User(post.author, true).avatar
@@ -75,14 +117,14 @@ Post.queryPosts = function(opsArray) {
   })
 }
 
-Post.findSingleById = function(postId) {
+Post.findSingleById = function(postId, visitorId) {
   return new Promise(async (resolve, reject) => {
     // validate id is a not string or invalid mongo _id
     if (typeof(postId) != 'string' || !ObjectId.isValid(postId)) {
       reject()
       return
     }
-    let posts = await Post.queryPosts([{$match: {_id: new ObjectId(postId)}}])
+    let posts = await Post.queryPosts([{$match: {_id: new ObjectId(postId)}}], visitorId)
     // check post is not empty
     if (posts.length) {
       resolve(posts[0])
@@ -97,6 +139,24 @@ Post.findByAuthorId = function(authorId) {
     {$match: {author: authorId}},
     {$sort: {createdDate: -1}}
   ])
+}
+
+// delete post from database
+Post.delete = function(postId, currentUserId) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let post = await Post.findSingleById(postId, currentUserId)
+      // check user owns post to delete
+      if (post.isVisitorOwner) {
+        await postsCollection.deleteOne({_id: new ObjectId(postId)})
+        resolve()
+      } else {
+        reject()
+      }
+    } catch {
+      reject()
+    }
+  })
 }
 
 module.exports = Post

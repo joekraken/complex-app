@@ -3,6 +3,8 @@ const session = require('express-session')
 const MongoStore = require('connect-mongo')
 const router = require('./app/router')
 const flash = require('connect-flash')
+const markdown = require('marked')
+const sanitizeHTML = require('sanitize-html')
 
 const app = express()
 
@@ -20,9 +22,23 @@ let sessionOptions = session({
 app.use(sessionOptions)
 app.use(flash()) // add flash feature
 
+// run for every page request
 app.use((req, res, next) => {
+  // make markdown available from ejs templates
+  res.locals.filterUserHTML = (content) => {
+    const options = {
+      allowedTags: ['p', 'br', 'ul', 'li', 'strong', 'bold', 'i', 'em', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+      allowedAttributes: []
+    }
+    return sanitizeHTML(markdown.parse(content), options)
+  }
+  // make flash messages available to all ejs templates
+  res.locals.errors = req.flash('errors')
+  res.locals.success = req.flash('success')
+  // make current user id available on req obj
+  if (req.session.user) {req.visitorId = req.session.user._id}
+  else {req.visitorId = 0}
   // make user session data accessible from any .ejs template
-  // thus remove duplication
   res.locals.user = req.session.user
   next()
 })
