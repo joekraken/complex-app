@@ -4,7 +4,7 @@
   "description": "Building a JS app for personal use, with todo feature, messaging system, and user login security.  Leveraging JavaScript, Express, Node, and Mongodb.",
   "main": "index.js",
   "scripts": {
-    "watch": "nodemon db.js",
+    "watch": "start nodemon db.js --ignore app/frontend-js --ignore app/public/ && start webpack --watch",
     "dev": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -12,6 +12,9 @@
   "author": "joe kirkbride",
   "license": "ISC",
   "dependencies": {
+    "@babel/core": "^7.21.4",
+    "@babel/preset-env": "^7.21.4",
+    "babel-loader": "^9.1.2",
     "bcryptjs": "^2.4.3",
     "connect-flash": "^0.1.1",
     "connect-mongo": "^5.0.0",
@@ -24,6 +27,8 @@
     "mongodb": "^5.2.0",
     "nodemon": "^2.0.22",
     "sanitize-html": "^2.10.0",
-    "validator": "^13.9.0"
+    "validator": "^13.9.0",
+    "webpack": "^5.81.0",
+    "webpack-cli": "^5.0.2"
   }
 }
