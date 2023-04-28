@@ -39,7 +39,7 @@ export default class Search {
   }
 
   keyPressHandler() {
-    let value = this.inputField
+    let value = this.inputField.value
     // check for new keystroke, i.e. user typing
     if (value != '' && value != this.previousValue) {
       clearTimeout(this.typingWaitTimer)
@@ -51,10 +51,10 @@ export default class Search {
   }
 
   sendRequest() {
-    axios.post('/search', {searchTerm: this.inputField.value}).then(() => {
-
+    axios.post('/search', {searchTerm: this.inputField.value}).then(response => {
+      console.log(response.data)
     }).catch(() => {
-      alert('test, search fail')
+      alert('oops, search fail')
     })
   }
 
