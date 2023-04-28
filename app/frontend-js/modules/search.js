@@ -1,3 +1,5 @@
+import axios from 'axios' // send HTTP requests
+
 export default class Search {
   // store DOM elements and useful data
   constructor() {
@@ -5,25 +7,59 @@ export default class Search {
     this.headerSearchIcon = document.querySelector('.header-search-icon') // select element with class
     this.overlay = document.querySelector('.search-overlay')
     this.closeOverlayIcon = document.querySelector('.close-live-search')
+    this.inputField = document.querySelector('#live-search-field')
+    this.resultsArea = document.querySelector('.live-search-results')
+    this.loaderIcon = document.querySelector('.circle-loader')
+    this.typingWaitTimer
+    this.previousValue = ''
     this.events()
   }
+  //live-search-results--visible
 
   // events
   events() {
+    this.inputField.addEventListener('keyup', () => this.keyPressHandler())
+    // close the search box overlay
     this.closeOverlayIcon.addEventListener('click', () => this.closeOverlay())
+    // open the search box overlay
     this.headerSearchIcon.addEventListener('click', (e) => {
       e.preventDefault()
       this.openOverlay()
     })
-
   }
+
   // methods
   openOverlay() {
     this.overlay.classList.add('search-overlay--visible')
+    setTimeout(() => this.inputField.focus(), 50)
   }
 
   closeOverlay() {
     this.overlay.classList.remove('search-overlay--visible')
+  }
+
+  keyPressHandler() {
+    let value = this.inputField
+    // check for new keystroke, i.e. user typing
+    if (value != '' && value != this.previousValue) {
+      clearTimeout(this.typingWaitTimer)
+      this.showLoaderIcon()
+      // wait afer last keystroke, to get search results
+      this.typingWaitTimer = setTimeout(() => this.sendRequest(), 1000)
+    }
+    this.previousValue = value
+  }
+
+  sendRequest() {
+    axios.post('/search', {searchTerm: this.inputField.value}).then(() => {
+
+    }).catch(() => {
+      alert('test, search fail')
+    })
+  }
+
+  showLoaderIcon() {
+    this.loaderIcon.classList.add('circle-loader--visible')
   }
 
   injectHTML() {
@@ -40,7 +76,7 @@ export default class Search {
         <div class="search-overlay-bottom">
           <div class="container container--narrow py-3">
             <div class="circle-loader"></div>
-            <div class="live-search-results live-search-results--visible">
+            <div class="live-search-results">
               <div class="list-group shadow-sm">
                 <div class="list-group-item active"><strong>Search Results</strong> (4 items found)</div>
 

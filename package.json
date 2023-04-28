@@ -5,16 +5,14 @@
   "main": "index.js",
   "scripts": {
     "watch": "start nodemon db.js --ignore app/frontend-js --ignore app/public/ && start webpack --watch",
-    "dev": "node app.js",
+    "dev": "concurrently -k \"nodemon db.js --ignore app/frontend-js --ignore app/public/\" \"webpack --watch\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "joe kirkbride",
   "license": "ISC",
   "dependencies": {
-    "@babel/core": "^7.21.4",
-    "@babel/preset-env": "^7.21.4",
-    "babel-loader": "^9.1.2",
+    "axios": "^1.4.0",
     "bcryptjs": "^2.4.3",
     "connect-flash": "^0.1.1",
     "connect-mongo": "^5.0.0",
@@ -27,7 +25,13 @@
     "mongodb": "^5.2.0",
     "nodemon": "^2.0.22",
     "sanitize-html": "^2.10.0",
-    "validator": "^13.9.0",
+    "validator": "^13.9.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.21.4",
+    "@babel/preset-env": "^7.21.4",
+    "babel-loader": "^9.1.2",
+    "concurrently": "^8.0.1",
     "webpack": "^5.81.0",
     "webpack-cli": "^5.0.2"
   }
