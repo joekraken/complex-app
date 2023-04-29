@@ -52,7 +52,7 @@ Post.prototype.create = function() {
   })
 }
 
-// updated a post in the database
+// updated a post, check user/visitor is owner
 Post.prototype.update = function() {
   return new Promise(async (resolve, reject) => {
     try {
@@ -72,6 +72,7 @@ Post.prototype.update = function() {
   })
 }
 
+// send post update to mongo database
 Post.prototype.updateDb = function() {
   return new Promise(async (resolve, reject) => {
     this.cleanUp()
