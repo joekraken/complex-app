@@ -1,4 +1,6 @@
 import axios from 'axios' // send HTTP requests
+import DOMPurify from 'dompurify' // sanitize HTML
+
 
 export default class Search {
   // store DOM elements and useful data
@@ -61,19 +63,17 @@ export default class Search {
   renderResultsHTML(posts) {
     // check results has items
     if (posts.length) {
-      this.resultsArea.innerHTML = 
-        `<div class="list-group shadow-sm">
-          <div class="list-group-item active"><strong>Search Results</strong> (${posts.length > 1 ? `${posts.length} items` : '1 item'} found)</div>
-          ${posts.map((post) => {
-            const postDate = new Date(post.createdDate)
-            return `<a href="/post/${post._id}" class="list-group-item list-group-item-action">
-                <img class="avatar-tiny" src="${post.author.avatar}"> <strong>${post.title}</strong>
-                <span class="text-muted small">by ${post.author.username} on ${postDate.getMonth()+1}/${postDate.getDay()}/${postDate.getFullYear()}</span>
-              </a>`
-          }).join('')}
-
-
-        </div>`
+      // remove malicious JavaScript
+      this.resultsArea.innerHTML = DOMPurify.sanitize(`<div class="list-group shadow-sm">
+        <div class="list-group-item active"><strong>Search Results</strong> (${posts.length > 1 ? `${posts.length} items` : '1 item'} found)</div>
+        ${posts.map((post) => {
+          const postDate = new Date(post.createdDate)
+          return `<a href="/post/${post._id}" class="list-group-item list-group-item-action">
+              <img class="avatar-tiny" src="${post.author.avatar}"> <strong>${post.title}</strong>
+              <span class="text-muted small">by ${post.author.username} on ${postDate.getMonth()+1}/${postDate.getDay()}/${postDate.getFullYear()}</span>
+            </a>`
+        }).join('')}
+      </div>`)
     } else {
       this.resultsArea.innerHTML = `<p class='alert alert-danger text-center shadow-sm'>Sorry, no results found for that serach</p>`
     }
@@ -123,13 +123,10 @@ export default class Search {
             <span class="close-live-search"><i class="fas fa-times-circle"></i></span>
           </div>
         </div>
-
         <div class="search-overlay-bottom">
           <div class="container container--narrow py-3">
             <div class="circle-loader"></div>
-            <div class="live-search-results">
-              
-            </div>
+            <div class="live-search-results"></div>
           </div>
         </div>
       </div>
