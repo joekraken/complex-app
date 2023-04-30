@@ -2,6 +2,8 @@ const ObjectId = require('mongodb').ObjectId
 const postsCollection = require('../../db').db().collection('posts')
 const User = require('./User')
 const sanitizeHTML = require('sanitize-html')
+// uncomment following to create index in mongo
+// postsCollection.createIndex({title: "text", body: "text"})
 
 let Post = function(data, userId, postId) {
   this.data = data
@@ -50,7 +52,7 @@ Post.prototype.create = function() {
   })
 }
 
-// updated a post in the database
+// updated a post, check user/visitor is owner
 Post.prototype.update = function() {
   return new Promise(async (resolve, reject) => {
     try {
@@ -70,6 +72,7 @@ Post.prototype.update = function() {
   })
 }
 
+// send post update to mongo database
 Post.prototype.updateDb = function() {
   return new Promise(async (resolve, reject) => {
     this.cleanUp()
@@ -87,7 +90,11 @@ Post.prototype.updateDb = function() {
   })
 }
 
-Post.queryPosts = function(opsArray, visitorId) {
+// reusable method to query database
+// opsArray - unique mongo matching operations
+// visitorId - when needed to verify user owns posts
+// finalOps - unique mongo sorting operations (note: $sort must go after $project)
+Post.queryPosts = function(opsArray, visitorId, finalOps = []) {
   return new Promise(async (resolve, reject) => {
     let aggregateOps = opsArray.concat([
       {$lookup: {from: 'users', localField: 'author', foreignField: '_id', as: 'authorInfo'}},
@@ -98,7 +105,7 @@ Post.queryPosts = function(opsArray, visitorId) {
         authorId: '$author',
         author: {$arrayElemAt: ['$authorInfo', 0]}
       }}
-    ])
+    ]).concat(finalOps)
     // retrieve the post associated with the id and author
     let posts = await postsCollection.aggregate(aggregateOps).toArray()
     // clean up author property in post object
@@ -106,13 +113,13 @@ Post.queryPosts = function(opsArray, visitorId) {
     // .map() creates a new array
     posts = posts.map(function(post) {
       post.isVisitorOwner = post.authorId.equals(visitorId)
+      post.authorId = undefined
       post.author = {
         username: post.author.username,
         avatar: new User(post.author, true).avatar
       }
       return post
     })
-
     resolve(posts)
   })
 }
@@ -159,4 +166,23 @@ Post.delete = function(postId, currentUserId) {
   })
 }
 
+// search request to database
+Post.search = function(searchTerm) {
+  return new Promise(async (resolve, reject) => {
+    // check search is string
+    if (typeof(searchTerm) == 'string') {
+      let posts = await Post.queryPosts([
+        // find text that contains the search term
+        {$match: {$text: {$search: searchTerm}}}
+      ],
+      undefined, // empty visitor id
+      // sort by relevance
+      [{$sort: {score: {$meta: 'textScore'}}}]
+    )
+      resolve(posts)
+    } else {
+      reject()
+    }
+  })
+}
 module.exports = Post
