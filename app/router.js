@@ -9,7 +9,9 @@ router.get('/', userController.home) // home page
 router.post('/register', userController.register) // new user sign up
 router.post('/login', userController.login) // login existing user
 router.post('/logout', userController.logout)
-router.get('/profile/:username', userController.ifUserExists, userController.profilePostsScreen)
+
+// profile-feature routes
+router.get('/profile/:username', userController.ifUserExists, userController.sharedProfileData, userController.profilePostsScreen)
 
 // post-feature routes
 router.get('/create-post', userController.isLoggedIn, postController.createPostScreen)

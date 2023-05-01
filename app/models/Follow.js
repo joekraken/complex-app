@@ -11,7 +11,7 @@ let Follow = function(toFollowUsername, loggedInUserId) {
 }
 
 // sanitize data
-Follow.prototype.cleanUp = async function() {
+Follow.prototype.cleanUp = function() {
   if (typeof(this.followedUsername) != 'string') {this.followedUsername = ''}
 }
 
@@ -38,5 +38,16 @@ Follow.prototype.create = function() {
     }
   })
 }
+
+// return true if visitor is following profile, else false
+Follow.isVisitorFollowing = async function(followedUserId, visitorId) {
+  let followDoc = await followsCollection.findOne({followedUserId: followedUserId, authorId: new ObjectId(visitorId)})
+  // true if visitor is following profile user
+  if (followDoc) {
+    return true
+  }
+  return false
+}
+
 
 module.exports = Follow

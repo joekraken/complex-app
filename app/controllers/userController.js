@@ -1,5 +1,7 @@
-const User = require('../models/User') // User model
-const Post = require('../models/Post') // Post model
+// models
+const User = require('../models/User')
+const Post = require('../models/Post')
+const Follow = require('../models/Follow')
 
 // verify user is logged in, mustBeLoggedIn
 exports.isLoggedIn = (req, res, next) => {
@@ -75,10 +77,22 @@ exports.profilePostsScreen = (req, res) => {
     res.render('profile', {
       profileUsername: req.profileUser.username,
       profileAvatar: req.profileUser.avatar,
-      posts: posts
+      posts: posts,
+      isFollowing: req.isFollowing
     })
   }).catch(() => {
     res.render('404')
   })
 
+}
+
+// change view between user profile data
+exports.sharedProfileData = async (req, res, next) => {
+  let isFollowing = false
+  // check user is logged in, get true/false following user profile
+  if (req.session.user) {
+    isFollowing = await Follow.isVisitorFollowing(req.profileUser._id, req.visitorId)
+  }
+  req.isFollowing = isFollowing
+  next()
 }
