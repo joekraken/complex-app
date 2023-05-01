@@ -24,5 +24,6 @@ router.post('/search', postController.search)
 
 // follow-feature routes
 router.post('/addFollow/:username', userController.isLoggedIn, followController.addFollow)
+router.post('/removeFollow/:username', userController.isLoggedIn, followController.removeFollow)
 
 module.exports = router

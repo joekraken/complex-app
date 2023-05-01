@@ -16,12 +16,20 @@ Follow.prototype.cleanUp = function() {
 }
 
 // verify user to follow exists in db
-Follow.prototype.validate = async function() {
+Follow.prototype.validate = async function(action) {
   let followedAccount = await usersCollection.findOne({username: this.followedUsername})
   if (followedAccount) {
     this.followedId = followedAccount._id
   } else {
     this.errors.push('You cannot follow non-existing user')
+  }
+  let doesFollowingExist = await followsCollection.findOne({followedUserId: this.followedId, authorId: new ObjectId(this.authorId)})
+  // check action type and if already following user
+  if (action == 'create') {
+    if (doesFollowingExist) {this.errors.push('You are already following user profile')}
+  }
+  if (action == 'delete') {
+    if (!doesFollowingExist) {this.errors.push('You are not following user profile and cannot stop following')}
   }
 }
 
@@ -29,9 +37,23 @@ Follow.prototype.validate = async function() {
 Follow.prototype.create = function() {
   return new Promise(async (resolve, reject) => {
     this.cleanUp()
-    await this.validate()
+    await this.validate('create')
     if (!this.errors.length) {
       await followsCollection.insertOne({followedUserId: this.followedId, authorId: new ObjectId(this.authorId)})
+      resolve()
+    } else {
+      reject(errors)
+    }
+  })
+}
+
+// remove the follow doc in mongodb
+Follow.prototype.delete = function() {
+  return new Promise(async (resolve, reject) => {
+    this.cleanUp()
+    await this.validate('delete')
+    if (!this.errors.length) {
+      await followsCollection.deleteOne({followedUserId: this.followedId, authorId: new ObjectId(this.authorId)})
       resolve()
     } else {
       reject(errors)
