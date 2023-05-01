@@ -78,7 +78,8 @@ exports.profilePostsScreen = (req, res) => {
       profileUsername: req.profileUser.username,
       profileAvatar: req.profileUser.avatar,
       posts: posts,
-      isFollowing: req.isFollowing
+      isFollowing: req.isFollowing,
+      isVisitorsProfile: req.isVisitorsProfile
     })
   }).catch(() => {
     res.render('404')
@@ -88,11 +89,16 @@ exports.profilePostsScreen = (req, res) => {
 
 // change view between user profile data
 exports.sharedProfileData = async (req, res, next) => {
+  let isOwnProfile = false
   let isFollowing = false
-  // check user is logged in, get true/false following user profile
+  // veriy user is logged in
   if (req.session.user) {
+    // T/F is viewing you own profile
+    isOwnProfile = req.profileUser._id.equals(req.session.user._id)
+    // T/F is already following user profile
     isFollowing = await Follow.isVisitorFollowing(req.profileUser._id, req.visitorId)
   }
+  req.isVisitorsProfile = isOwnProfile
   req.isFollowing = isFollowing
   next()
 }

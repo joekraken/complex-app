@@ -31,6 +31,8 @@ Follow.prototype.validate = async function(action) {
   if (action == 'delete') {
     if (!doesFollowingExist) {this.errors.push('You are not following user profile and cannot stop following')}
   }
+  // shouldn't follow yourself
+  if (this.followedId.equals(this.authorId)) {this.errors.push('You cannot follow yourself')}
 }
 
 // create the follow doc in mongodb
@@ -42,7 +44,7 @@ Follow.prototype.create = function() {
       await followsCollection.insertOne({followedUserId: this.followedId, authorId: new ObjectId(this.authorId)})
       resolve()
     } else {
-      reject(errors)
+      reject(this.errors)
     }
   })
 }
