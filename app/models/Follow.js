@@ -96,8 +96,8 @@ getFollowUsers = function(pipeline) {
   return new Promise(async (resolve, reject) => {
     try {
       pipeline.push({$project: {
-        username: {$arrayElemAt: ["userDoc.username", 0]},
-        email: {$arrayElemAt: ["userDoc.email", 0]}
+        username: {$arrayElemAt: ["$userDoc.username", 0]},
+        email: {$arrayElemAt: ["$userDoc.email", 0]}
       }})
       // retrieve and aggregate a set of follow and user docs from mongo
       let users = await followsCollection.aggregate(pipeline).toArray()
