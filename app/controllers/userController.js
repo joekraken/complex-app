@@ -83,6 +83,15 @@ exports.sharedProfileData = async (req, res, next) => {
   }
   req.isVisitorsProfile = isOwnProfile
   req.isFollowing = isFollowing
+  // counts for posts, followers, following
+  const postCountPromise = Post.countPostsByAuthor(req.profileUser._id)
+  const followerCountPromise = Follow.countFollowersById(req.profileUser._id)
+  const followingCountPromise = Follow.countFollowingById(req.profileUser._id)
+  // execute all promises simultaneously save into a destructured array
+  const [postCount, followerCount, followingCount] = await Promise.all([postCountPromise, followerCountPromise, followingCountPromise])
+  req.postCount = postCount
+  req.followerCount = followerCount
+  req.followingCount = followingCount
   next()
 }
 
@@ -92,6 +101,7 @@ exports.profilePostsScreen = (req, res) => {
   Post.findByAuthorId(req.profileUser._id).then((posts) => {
     userProfile = profileDataObj(req)
     userProfile.posts = posts
+    userProfile.currentPage = 'posts'
     res.render('profile', userProfile)
   }).catch(() => res.render('404'))
 }
@@ -102,6 +112,7 @@ exports.profileFollowersScreen = async (req, res) => {
     let followers = await Follow.getFollowersById(req.profileUser._id)
     userProfile = profileDataObj(req)
     userProfile.followers = followers
+    userProfile.currentPage = 'followers'
     res.render('profile-followers', userProfile)
   } catch {
     res.render('404')
@@ -114,18 +125,21 @@ exports.profileFollowingScreen = async (req, res) => {
     let following = await Follow.getFollowingById(req.profileUser._id)
     userProfile = profileDataObj(req)
     userProfile.following = following
+    userProfile.currentPage = 'following'
     res.render('profile-following', userProfile)
   } catch {
     res.render('404')
   }
 }
 
+//** helper methods **
 // user profile data to render
 profileDataObj = req => {
   return {
     profileUsername: req.profileUser.username,
     profileAvatar: req.profileUser.avatar,
     isFollowing: req.isFollowing,
-    isVisitorsProfile: req.isVisitorsProfile
+    isVisitorsProfile: req.isVisitorsProfile,
+    counts: {post: req.postCount, follower: req.followerCount, following: req.followingCount}
   }
 }

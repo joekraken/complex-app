@@ -90,6 +90,17 @@ Follow.getFollowingById = function(userId) {
   ])
 }
 
+// return a count of followers for a profile user
+Follow.countFollowersById = function(authorId) {
+  return countFollowUser({followedUserId: authorId})
+}
+
+// return a count of user following a profile user
+Follow.countFollowingById = function(authorId) {
+  return countFollowUser({authorId: authorId})
+}
+
+// ** helper methods **
 // retrieve list of users either followers or following
 // depending on the pipeline argument
 getFollowUsers = function(pipeline) {
@@ -110,6 +121,15 @@ getFollowUsers = function(pipeline) {
     } catch {
       reject()
     }
+  })
+}
+
+// retrieve count of followers or following users
+// depending on the filter argument
+countFollowUser = function(filter) {
+  return new Promise(async (resolve, reject) => {
+    const count = await followsCollection.countDocuments(filter)
+    resolve(count)
   })
 }
 
