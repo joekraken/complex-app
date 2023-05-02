@@ -70,20 +70,18 @@ exports.ifUserExists = (req, res, next) => {
   })
 }
 
-// list of post for a user
+// on user profile list their posts
 exports.profilePostsScreen = (req, res) => {
   // get posts by author id
   Post.findByAuthorId(req.profileUser._id).then((posts) => {
     res.render('profile', {
       profileUsername: req.profileUser.username,
       profileAvatar: req.profileUser.avatar,
-      posts: posts,
       isFollowing: req.isFollowing,
-      isVisitorsProfile: req.isVisitorsProfile
+      isVisitorsProfile: req.isVisitorsProfile,
+      posts: posts
     })
-  }).catch(() => {
-    res.render('404')
-  })
+  }).catch(() => res.render('404'))
 
 }
 
@@ -101,4 +99,25 @@ exports.sharedProfileData = async (req, res, next) => {
   req.isVisitorsProfile = isOwnProfile
   req.isFollowing = isFollowing
   next()
+}
+
+// on user profile show which users are following them
+exports.profileFollowersScreen = async (req, res) => {
+  try {
+    let followers = await Follow.getFollowersById(req.profileUser._id)
+    res.render('profile-followers', {
+      profileUsername: req.profileUser.username,
+      profileAvatar: req.profileUser.avatar,
+      isFollowing: req.isFollowing,
+      isVisitorsProfile: req.isVisitorsProfile,
+      followers: followers
+    })
+  } catch {
+    res.render('404')
+  }
+}
+
+// on user profile show other users they follow
+exports.profileFollowingScreen = async (req, res) => {
+
 }
