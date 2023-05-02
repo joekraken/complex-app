@@ -70,21 +70,6 @@ exports.ifUserExists = (req, res, next) => {
   })
 }
 
-// on user profile list their posts
-exports.profilePostsScreen = (req, res) => {
-  // get posts by author id
-  Post.findByAuthorId(req.profileUser._id).then((posts) => {
-    res.render('profile', {
-      profileUsername: req.profileUser.username,
-      profileAvatar: req.profileUser.avatar,
-      isFollowing: req.isFollowing,
-      isVisitorsProfile: req.isVisitorsProfile,
-      posts: posts
-    })
-  }).catch(() => res.render('404'))
-
-}
-
 // change view between user profile data
 exports.sharedProfileData = async (req, res, next) => {
   let isOwnProfile = false
@@ -101,17 +86,23 @@ exports.sharedProfileData = async (req, res, next) => {
   next()
 }
 
+// on user profile list their posts
+exports.profilePostsScreen = (req, res) => {
+  // get posts by author id
+  Post.findByAuthorId(req.profileUser._id).then((posts) => {
+    userProfile = profileDataObj(req)
+    userProfile.posts = posts
+    res.render('profile', userProfile)
+  }).catch(() => res.render('404'))
+}
+
 // on user profile show which users are following them
 exports.profileFollowersScreen = async (req, res) => {
   try {
     let followers = await Follow.getFollowersById(req.profileUser._id)
-    res.render('profile-followers', {
-      profileUsername: req.profileUser.username,
-      profileAvatar: req.profileUser.avatar,
-      isFollowing: req.isFollowing,
-      isVisitorsProfile: req.isVisitorsProfile,
-      followers: followers
-    })
+    userProfile = profileDataObj(req)
+    userProfile.followers = followers
+    res.render('profile-followers', userProfile)
   } catch {
     res.render('404')
   }
@@ -119,5 +110,22 @@ exports.profileFollowersScreen = async (req, res) => {
 
 // on user profile show other users they follow
 exports.profileFollowingScreen = async (req, res) => {
+  try {
+    let following = await Follow.getFollowingById(req.profileUser._id)
+    userProfile = profileDataObj(req)
+    userProfile.following = following
+    res.render('profile-following', userProfile)
+  } catch {
+    res.render('404')
+  }
+}
 
+// user profile data to render
+profileDataObj = req => {
+  return {
+    profileUsername: req.profileUser.username,
+    profileAvatar: req.profileUser.avatar,
+    isFollowing: req.isFollowing,
+    isVisitorsProfile: req.isVisitorsProfile
+  }
 }

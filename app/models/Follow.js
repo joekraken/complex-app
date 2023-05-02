@@ -76,23 +76,37 @@ Follow.isVisitorFollowing = async function(followedUserId, visitorId) {
 
 // return a list of followers this user is following
 Follow.getFollowersById = function(userId) {
+  return getFollowUsers([
+    {$match: {followedUserId: userId}},
+    {$lookup: {from: "users", localField: "authorId", foreignField: "_id", as: "userDoc"}},
+  ])
+}
+
+// return a list of user following this profile-user
+Follow.getFollowingById = function(userId) {
+  return getFollowUsers([
+    {$match: {authorId: userId}},
+    {$lookup: {from: "users", localField: "followedUserId", foreignField: "_id", as: "userDoc"}},
+  ])
+}
+
+// retrieve list of users either followers or following
+// depending on the pipeline argument
+getFollowUsers = function(pipeline) {
   return new Promise(async (resolve, reject) => {
     try {
+      pipeline.push({$project: {
+        username: {$arrayElemAt: ["userDoc.username", 0]},
+        email: {$arrayElemAt: ["userDoc.email", 0]}
+      }})
       // retrieve and aggregate a set of follow and user docs from mongo
-      let followers = await followsCollection.aggregate([
-        {$match: {followedUserId: userId}},
-        {$lookup: {from: "users", localField: "authorId", foreignField: "_id", as: "userDoc"}},
-        {$project: {
-          username: {$arrayElemAt: ["$userDoc.username", 0]},
-          email: {$arrayElemAt: ["$userDoc.email", 0]}
-        }}
-      ]).toArray()
+      let users = await followsCollection.aggregate(pipeline).toArray()
       // map array into objects
-      followers = followers.map(follower => {
-        let user = new User(follower, true)
-        return {username: follower.username, avatar: user.avatar}
+      users = users.map(item => {
+        let user = new User(item, true)
+        return {username: user.data.username, avatar: user.avatar}
       })
-      resolve(followers)
+      resolve(users)
     } catch {
       reject()
     }
