@@ -56,6 +56,30 @@ app.set('view engine', 'ejs')
 // homepage GET request
 app.use('/', router)
 
-// export this app, instead of listening to requests
-module.exports = app
-// listen to incoming requests is in db.js file
+// create socket.io server with app express code above
+const server = require('http').createServer(app)
+const io = require('socket.io')(server)
+
+// make express session data available to socket.io
+io.use((socket, next) => {
+  sessionOptions(socket.request, socket.request.res, next)
+})
+
+// create connection
+io.on('connection', client => {
+  const user = client.request.session.user
+  if (user) {
+    let userData = {username: user.username, avatar: user.avatar}
+    // outgoing data & message
+    client.emit('welcome', userData)
+    // incoming data & message 
+    client.on('chatMessageFromBrowser', data => {
+      // sanitize malicious code in message
+      userData.message = sanitizeHTML(data.message, {allowedTags: [], allowedAttributes: []})
+      client.broadcast.emit('chatMessageFromServer', userData)
+    })
+  }
+})
+
+// export this server which includes app, instead of listening to requests
+module.exports = server

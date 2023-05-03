@@ -101,7 +101,7 @@ exports.sharedProfileData = async (req, res, next) => {
 exports.profilePostsScreen = (req, res) => {
   // get posts by author id
   Post.findByAuthorId(req.profileUser._id).then((posts) => {
-    userProfile = profileDataObj(req)
+    userProfile = profileDataObj(req, `${req.profileUser.username}'s profile`)
     userProfile.posts = posts
     userProfile.currentPage = 'posts'
     res.render('profile', userProfile)
@@ -112,7 +112,7 @@ exports.profilePostsScreen = (req, res) => {
 exports.profileFollowersScreen = async (req, res) => {
   try {
     let followers = await Follow.getFollowersById(req.profileUser._id)
-    userProfile = profileDataObj(req)
+    userProfile = profileDataObj(req, `${req.profileUser.username}'s followers`)
     userProfile.followers = followers
     userProfile.currentPage = 'followers'
     res.render('profile-followers', userProfile)
@@ -125,7 +125,7 @@ exports.profileFollowersScreen = async (req, res) => {
 exports.profileFollowingScreen = async (req, res) => {
   try {
     let following = await Follow.getFollowingById(req.profileUser._id)
-    userProfile = profileDataObj(req)
+    userProfile = profileDataObj(req, `Followed by ${req.profileUser.username}`)
     userProfile.following = following
     userProfile.currentPage = 'following'
     res.render('profile-following', userProfile)
@@ -136,8 +136,9 @@ exports.profileFollowingScreen = async (req, res) => {
 
 //** helper methods **
 // user profile data to render
-profileDataObj = req => {
+profileDataObj = (req, title) => {
   return {
+    title: title,
     profileUsername: req.profileUser.username,
     profileAvatar: req.profileUser.avatar,
     isFollowing: req.isFollowing,
