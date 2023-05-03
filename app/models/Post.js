@@ -107,7 +107,7 @@ Post.getFeed = async function(currentUserId) {
 // reusable method to query database
 // opsArray - unique mongo matching operations
 // visitorId - when needed to verify user owns posts
-// finalOps - unique mongo sorting operations (note: $sort must go after $project)
+// finalOps - unique mongo sorting operations (note: git branc$sort must go after $project)
 Post.queryPosts = function(opsArray, visitorId, finalOps = []) {
   return new Promise(async (resolve, reject) => {
     let aggregateOps = opsArray.concat([
