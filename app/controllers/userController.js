@@ -50,10 +50,12 @@ exports.register = (req, res) => {
 }
 
 // user dashboard or guest page
-exports.home = (req, res) => {
+exports.home = async (req, res) => {
   // confirm user is logged in
   if (req.session.user) {
-    res.render('home-dashboard')
+    // feed of posts that current user is following
+    let posts = await Post.getFeed(req.session.user._id)
+    res.render('home-dashboard', {posts: posts})
   } else {
     // render home page, and retrieve possible flash error messages
     res.render('home-guest', {regErrors: req.flash('regErrors')})
