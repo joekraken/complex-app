@@ -29,7 +29,7 @@ export default class Chat {
   }
 
   openConnection() {
-
+    this.socket = io()
   }
 
   injectHTML() {

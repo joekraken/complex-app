@@ -56,6 +56,13 @@ app.set('view engine', 'ejs')
 // homepage GET request
 app.use('/', router)
 
-// export this app, instead of listening to requests
-module.exports = app
-// listen to incoming requests is in db.js file
+// create socket.io server with app express code above
+const server = require('http').createServer(app)
+const io = require('socket.io')(server)
+// create connection
+io.on('connection', client => {
+  console.log('test socket.io connection')
+})
+
+// export this server which includes app, instead of listening to requests
+module.exports = server
