@@ -70,9 +70,12 @@ io.on('connection', client => {
   const user = client.request.session.user
   if (user) {
     let userData = {username: user.username, avatar: user.avatar}
+    // outgoing data & message
     client.emit('welcome', userData)
+    // incoming data & message 
     client.on('chatMessageFromBrowser', data => {
-      userData.message = data.message
+      // sanitize malicious code in message
+      userData.message = sanitizeHTML(data.message, {allowedTags: [], allowedAttributes: []})
       client.broadcast.emit('chatMessageFromServer', userData)
     })
   }
