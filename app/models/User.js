@@ -123,4 +123,21 @@ User.findByUsername = function(username) {
   })
 }
 
+User.doesEmailExist = function(email) {
+  return new Promise(async (resolve, reject) => {
+    // check if email exists
+    if (typeof(email) != 'string') {
+      reject()
+      return
+    }
+    const count = await usersCollection.countDocuments({email: email})
+    // true email exists count > 0, else false
+    if (count) {
+      resolve(true)
+    } else {
+      resolve(false)
+    }
+  })
+}
+
 module.exports = User

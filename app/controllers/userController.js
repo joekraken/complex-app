@@ -49,6 +49,22 @@ exports.register = (req, res) => {
   })
 }
 
+// check username exists
+exports.doesUsernameExist = function(req, res) {
+  User.findByUsername(req.body.username).then(() => {
+    // return true if name is taken
+    res.json(true)
+  }).catch(() => {
+    // return false if name is available
+    res.json(false)
+  })
+}
+
+exports.doesEmailExist = async function(req, res) {
+  let emailExist = await User.doesEmailExist(req.body.email)
+  res.json(emailExist)
+}
+
 // user dashboard or guest page
 exports.home = async (req, res) => {
   // confirm user is logged in
