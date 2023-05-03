@@ -1,5 +1,6 @@
 const ObjectId = require('mongodb').ObjectId
 const postsCollection = require('../../db').db().collection('posts')
+const followsCollection = require('../../db').db().collection('follows')
 const User = require('./User')
 const sanitizeHTML = require('sanitize-html')
 // uncomment following to create index in mongo
@@ -88,6 +89,19 @@ Post.prototype.updateDb = function() {
       resolve('failure')
     }
   })
+}
+
+Post.getFeed = async function(currentUserId) {
+  // get list of user ids that current user is following
+  let followedUsers = await followsCollection.find({authorId: new ObjectId(currentUserId)})
+    .project({_id:0, authorId:0}).toArray()
+    // map each item from object to id
+  followedUsers = followedUsers.map(user => user.followedUserId)
+  // get posts for authors in list of following user ids
+  return Post.queryPosts([
+    {$match: {author: {$in: followedUsers}}},
+    {$sort: {createdDate: -1}}
+  ])
 }
 
 // reusable method to query database
@@ -185,4 +199,13 @@ Post.search = function(searchTerm) {
     }
   })
 }
+
+// return count of posts by author
+Post.countPostsByAuthor = function(authorId) {
+  return new Promise(async (resolve, reject) => {
+      const count = await postsCollection.countDocuments({author: authorId})
+      resolve(count)
+  })
+}
+
 module.exports = Post

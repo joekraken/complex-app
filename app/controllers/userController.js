@@ -1,5 +1,7 @@
-const User = require('../models/User') // User model
-const Post = require('../models/Post') // Post model
+// models
+const User = require('../models/User')
+const Post = require('../models/Post')
+const Follow = require('../models/Follow')
 
 // verify user is logged in, mustBeLoggedIn
 exports.isLoggedIn = (req, res, next) => {
@@ -48,10 +50,12 @@ exports.register = (req, res) => {
 }
 
 // user dashboard or guest page
-exports.home = (req, res) => {
+exports.home = async (req, res) => {
   // confirm user is logged in
   if (req.session.user) {
-    res.render('home-dashboard')
+    // feed of posts that current user is following
+    let posts = await Post.getFeed(req.session.user._id)
+    res.render('home-dashboard', {posts: posts})
   } else {
     // render home page, and retrieve possible flash error messages
     res.render('home-guest', {regErrors: req.flash('regErrors')})
@@ -68,17 +72,76 @@ exports.ifUserExists = (req, res, next) => {
   })
 }
 
-// list of post for a user
+// change view between user profile data
+exports.sharedProfileData = async (req, res, next) => {
+  let isOwnProfile = false
+  let isFollowing = false
+  // veriy user is logged in
+  if (req.session.user) {
+    // T/F is viewing you own profile
+    isOwnProfile = req.profileUser._id.equals(req.session.user._id)
+    // T/F is already following user profile
+    isFollowing = await Follow.isVisitorFollowing(req.profileUser._id, req.visitorId)
+  }
+  req.isVisitorsProfile = isOwnProfile
+  req.isFollowing = isFollowing
+  // counts for posts, followers, following
+  const postCountPromise = Post.countPostsByAuthor(req.profileUser._id)
+  const followerCountPromise = Follow.countFollowersById(req.profileUser._id)
+  const followingCountPromise = Follow.countFollowingById(req.profileUser._id)
+  // execute all promises simultaneously save into a destructured array
+  const [postCount, followerCount, followingCount] = await Promise.all([postCountPromise, followerCountPromise, followingCountPromise])
+  req.postCount = postCount
+  req.followerCount = followerCount
+  req.followingCount = followingCount
+  next()
+}
+
+// on user profile list their posts
 exports.profilePostsScreen = (req, res) => {
   // get posts by author id
   Post.findByAuthorId(req.profileUser._id).then((posts) => {
-    res.render('profile', {
-      profileUsername: req.profileUser.username,
-      profileAvatar: req.profileUser.avatar,
-      posts: posts
-    })
-  }).catch(() => {
-    res.render('404')
-  })
+    userProfile = profileDataObj(req)
+    userProfile.posts = posts
+    userProfile.currentPage = 'posts'
+    res.render('profile', userProfile)
+  }).catch(() => res.render('404'))
+}
 
+// on user profile show which users are following them
+exports.profileFollowersScreen = async (req, res) => {
+  try {
+    let followers = await Follow.getFollowersById(req.profileUser._id)
+    userProfile = profileDataObj(req)
+    userProfile.followers = followers
+    userProfile.currentPage = 'followers'
+    res.render('profile-followers', userProfile)
+  } catch {
+    res.render('404')
+  }
+}
+
+// on user profile show other users they follow
+exports.profileFollowingScreen = async (req, res) => {
+  try {
+    let following = await Follow.getFollowingById(req.profileUser._id)
+    userProfile = profileDataObj(req)
+    userProfile.following = following
+    userProfile.currentPage = 'following'
+    res.render('profile-following', userProfile)
+  } catch {
+    res.render('404')
+  }
+}
+
+//** helper methods **
+// user profile data to render
+profileDataObj = req => {
+  return {
+    profileUsername: req.profileUser.username,
+    profileAvatar: req.profileUser.avatar,
+    isFollowing: req.isFollowing,
+    isVisitorsProfile: req.isVisitorsProfile,
+    counts: {post: req.postCount, follower: req.followerCount, following: req.followingCount}
+  }
 }
