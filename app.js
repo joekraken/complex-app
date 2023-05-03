@@ -59,9 +59,23 @@ app.use('/', router)
 // create socket.io server with app express code above
 const server = require('http').createServer(app)
 const io = require('socket.io')(server)
+
+// make express session data available to socket.io
+io.use((socket, next) => {
+  sessionOptions(socket.request, socket.request.res, next)
+})
+
 // create connection
 io.on('connection', client => {
-  console.log('test socket.io connection')
+  const user = client.request.session.user
+  if (user) {
+    let userData = {username: user.username, avatar: user.avatar}
+    client.emit('welcome', userData)
+    client.on('chatMessageFromBrowser', data => {
+      userData.message = data.message
+      client.broadcast.emit('chatMessageFromServer', userData)
+    })
+  }
 })
 
 // export this server which includes app, instead of listening to requests
