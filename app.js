@@ -9,7 +9,17 @@ const csrf = require('csurf')
 
 const app = express()
 
-// config session
+// be able read request data
+app.use(express.urlencoded({extended: false}))
+// be able to read incoming json data
+app.use(express.json())
+
+// ** api routes; not effected by code below
+app.use('/api', require('./app/router-api'))
+
+// ** code below is for app
+
+// config session + cookies
 // secret phrase is required
 // cookie.maxAge in milliseconds, example 24 hrs = 1000 * 60 * 60 * 24
 let sessionOptions = session({
@@ -43,10 +53,6 @@ app.use((req, res, next) => {
   res.locals.user = req.session.user
   next()
 })
-
-// add user input to request data
-app.use(express.urlencoded({extended: false}))
-app.use(express.json()) // format request data as json
 
 app.use(express.static('app/public'))
 // setting the views folder locations

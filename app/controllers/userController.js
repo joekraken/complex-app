@@ -1,7 +1,7 @@
-// models
 const User = require('../models/User')
 const Post = require('../models/Post')
 const Follow = require('../models/Follow')
+const jwt = require('jsonwebtoken')
 
 // verify user is logged in, mustBeLoggedIn
 exports.isLoggedIn = (req, res, next) => {
@@ -151,6 +151,7 @@ exports.profileFollowingScreen = async (req, res) => {
 }
 
 //** helper methods **
+
 // user profile data to render
 profileDataObj = (req, title) => {
   return {
@@ -161,4 +162,40 @@ profileDataObj = (req, title) => {
     isVisitorsProfile: req.isVisitorsProfile,
     counts: {post: req.postCount, follower: req.followerCount, following: req.followingCount}
   }
+}
+
+// ** api methods **
+
+exports.apiIsLoggedIn = (req, res, next) => {
+  try {
+    req.apiUser = jwt.verify(req.body.token, process.env.JWTSECRET)
+    next()
+  } catch {
+    res.json('Invalid token sent')
+  }
+}
+
+// api login
+exports.apiLogin = (req, res) => {
+  let user = new User(req.body) // user object model
+  // login returns a Promise
+  user.login().then(function() {
+    const token = jwt.sign(
+      {_id:user.data._id},
+      process.env.JWTSECRET,
+      {expiresIn: '4h'})
+    res.json(token)
+  }).catch(function() {
+    res.json('failed login')
+  })
+}
+
+// check username exists
+exports.apiDoesUsernameExist = function(req, res, next) {
+  User.findByUsername(req.params.username).then(() => {
+    next()
+  }).catch(() => {
+    // invalid username
+    res.json("That user does not exist")
+  })
 }
