@@ -11,13 +11,13 @@ const app = express()
 
 // config session
 // secret phrase is required
-// cookie.maxAge in milliseconds
+// cookie.maxAge in milliseconds, example 24 hrs = 1000 * 60 * 60 * 24
 let sessionOptions = session({
   secret: 'javascript is awesome sauce',
   store: MongoStore.create({ client: require('./db')}),
   resave: false,
   saveUninitialized: false,
-  cookie: {maxAge: 1000 * 60 * 60 * 24, httpOnly: true}
+  cookie: {maxAge: 1000 * 60 * 60 * 4, httpOnly: true}
 })
 
 app.use(sessionOptions)
