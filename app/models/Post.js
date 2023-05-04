@@ -155,6 +155,7 @@ Post.findSingleById = function(postId, visitorId) {
   })
 }
 
+// return an array of posts by user id
 Post.findByAuthorId = function(authorId) {
   return Post.queryPosts([
     {$match: {author: authorId}},

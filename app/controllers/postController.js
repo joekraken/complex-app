@@ -1,4 +1,6 @@
 const Post = require('../models/Post') // Post model
+const User = require('../models/User')
+const jwt = require('jsonwebtoken')
 
 // viewCreateScreen, a view to create new post
 exports.createPostScreen = (req, res) => {
@@ -67,6 +69,7 @@ exports.viewEditScreen = async (req, res) => {
   }
 }
 
+// delete a post by its unique id
 exports.delete = (req, res) => {
   Post.delete(req.params.id, req.visitorId).then(() => {
     // user owns post that was deleted
@@ -85,4 +88,40 @@ exports.search = (req, res) => {
   }).catch(() => {
     res.json([])
   })
+}
+
+// ** api methods **
+
+// create post, send request to Model to save post 
+exports.apiCreate = (req, res) => {
+  let post = new Post(req.body, req.apiUser._id)
+  post.create().then(() => {
+    // save post to database
+    res.json('Congrats, post saved')
+  }).catch((errors) => {
+    // errors, post not saved
+    res.json(errors)
+  })
+}
+
+// delete a post by its unique id
+exports.apiDelete = (req, res) => {
+  Post.delete(req.params.id, req.apiUser._id).then(() => {
+    // user owns post that was deleted
+    res.json('Success, post is deleted')
+  }).catch(() => {
+    // error, post not deleted
+    res.json('You dont have permission to delete that post')
+  })
+}
+
+// get all posts by given username
+exports.apiPostsByUsername = async (req, res) => {
+  try {
+    let userDoc = await User.findByUsername(req.params.username)
+    let posts = await Post.findByAuthorId(userDoc._id)
+    res.json(posts)
+  } catch (error) {
+    res.json("Invalid user requested")
+  }
 }
