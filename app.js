@@ -5,18 +5,19 @@ const router = require('./app/router')
 const flash = require('connect-flash')
 const markdown = require('marked')
 const sanitizeHTML = require('sanitize-html')
+const csrf = require('csurf')
 
 const app = express()
 
 // config session
 // secret phrase is required
-// cookie.maxAge in milliseconds
+// cookie.maxAge in milliseconds, example 24 hrs = 1000 * 60 * 60 * 24
 let sessionOptions = session({
   secret: 'javascript is awesome sauce',
   store: MongoStore.create({ client: require('./db')}),
   resave: false,
   saveUninitialized: false,
-  cookie: {maxAge: 1000 * 60 * 60 * 24, httpOnly: true}
+  cookie: {maxAge: 1000 * 60 * 60 * 4, httpOnly: true}
 })
 
 app.use(sessionOptions)
@@ -53,8 +54,28 @@ app.set('views', 'app/views')
 // set view template engine
 app.set('view engine', 'ejs')
 
+// use csrf tokens
+app.use(csrf())
+// setup middleware
+app.use(function(req, res, next) {
+  res.locals.csrfToken = req.csrfToken()
+  next()
+})
+
 // homepage GET request
 app.use('/', router)
+
+// flash messages for csrf attacks
+app.use((err, req, res, next) => {
+  if (err) {
+    if (err.code == 'EBADCSRFTOKEN') {
+      req.flash('errors', 'CSRF: Cross-site request forgery attack detected')
+      req.session.save(() => res.redirect('/'))
+    } else {
+      res.render('404')
+    }
+  }
+})
 
 // create socket.io server with app express code above
 const server = require('http').createServer(app)
