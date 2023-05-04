@@ -2,6 +2,7 @@ import axios from 'axios'
 
 export default class RegistrationForm {
   constructor() {
+    this.csrfToken = document.querySelector('[name="_csrf"]').value
     this.form = document.querySelector('#registration-form')
     this.allFields = document.querySelectorAll('#registration-form .form-control')
     this.insertValidationElements()
@@ -102,7 +103,7 @@ export default class RegistrationForm {
     }
     // if no errors, then check server if username exists
     if (!this.username.errors) {
-      axios.post('/doesUsernameExist', {username: this.username.value}).then((response) => {
+      axios.post('/doesUsernameExist', {_csrf: this.csrfToken, username: this.username.value}).then((response) => {
         // true then username exists, else false
         if (response.data) {
           this.username.isUnique = false
@@ -128,7 +129,7 @@ export default class RegistrationForm {
       this.showValidationError(this.email, 'You must provide a valid email')
     }
     if (!this.email.errors) {
-      axios.post('/doesEmailExist', {email: this.email.value}).then((response) => {
+      axios.post('/doesEmailExist', {_csrf: this.csrfToken, email: this.email.value}).then((response) => {
         // true then email exists, else false
         if (response.data) {
           this.email.isUnique = false
@@ -160,8 +161,6 @@ export default class RegistrationForm {
       this.hideValidationError(this.password)
     }
   }
-  // isLength(this.data.password, {min: 12, max: 50})) {this.errors.push('Password must be 12 to 50 characters long')}
-  
 
   passwordAfterDelay() {
     // check length limit

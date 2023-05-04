@@ -5,6 +5,7 @@ import DOMPurify from 'dompurify' // sanitize HTML
 export default class Search {
   // store DOM elements and useful data
   constructor() {
+    this.csrfToken = document.querySelector('[name="_csrf"]').value
     this.injectHTML() // inject search area HTML
     this.headerSearchIcon = document.querySelector('.header-search-icon') // select element with class
     this.overlay = document.querySelector('.search-overlay')
@@ -52,7 +53,7 @@ export default class Search {
 
   // send HTTP search request to via route to Post model and database
   sendRequest() {
-    axios.post('/search', {searchTerm: this.inputField.value}).then(response => {
+    axios.post('/search', {_csrf: this.csrfToken, searchTerm: this.inputField.value}).then(response => {
       this.renderResultsHTML(response.data)
     }).catch(() => {
       alert('oops, search fail')

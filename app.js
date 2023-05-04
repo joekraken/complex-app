@@ -5,6 +5,7 @@ const router = require('./app/router')
 const flash = require('connect-flash')
 const markdown = require('marked')
 const sanitizeHTML = require('sanitize-html')
+const csrf = require('csurf')
 
 const app = express()
 
@@ -53,8 +54,28 @@ app.set('views', 'app/views')
 // set view template engine
 app.set('view engine', 'ejs')
 
+// use csrf tokens
+app.use(csrf())
+// setup middleware
+app.use(function(req, res, next) {
+  res.locals.csrfToken = req.csrfToken()
+  next()
+})
+
 // homepage GET request
 app.use('/', router)
+
+// flash messages for csrf attacks
+app.use((err, req, res, next) => {
+  if (err) {
+    if (err.code == 'EBADCSRFTOKEN') {
+      req.flash('errors', 'CSRF: Cross-site request forgery attack detected')
+      req.session.save(() => res.redirect('/'))
+    } else {
+      res.render('404')
+    }
+  }
+})
 
 // create socket.io server with app express code above
 const server = require('http').createServer(app)
