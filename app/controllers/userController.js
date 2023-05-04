@@ -151,6 +151,7 @@ exports.profileFollowingScreen = async (req, res) => {
 }
 
 //** helper methods **
+
 // user profile data to render
 profileDataObj = (req, title) => {
   return {
@@ -161,4 +162,17 @@ profileDataObj = (req, title) => {
     isVisitorsProfile: req.isVisitorsProfile,
     counts: {post: req.postCount, follower: req.followerCount, following: req.followingCount}
   }
+}
+
+// ** api methods **
+
+// api login
+exports.apiLogin = (req, res) => {
+  let user = new User(req.body) // user object model
+  // login returns a Promise
+  user.login().then(function() {
+    res.json('successful login')
+  }).catch(function(e) {
+    res.json('failed login')
+  })
 }
