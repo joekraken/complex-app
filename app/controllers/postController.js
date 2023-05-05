@@ -8,24 +8,26 @@ exports.createPostScreen = (req, res) => {
 }
 
 // create post, send request to Model to save post 
-exports.create = (req, res) => {
+exports.create = async (req, res) => {
   let post = new Post(req.body, req.session.user._id)
-  post.create().then((postId) => {
-    // save post to database
+  try {
+    // save new post to db
+    const postId = await post.create()
     req.flash('success', 'New post successfully created')
     req.session.save(() => res.redirect(`/post/${postId}`))
-  }).catch((errors) => {
+  } catch (errors) {
     // errors, post not saved
     errors.forEach(error => req.flash('errors', error))
     req.session.save(() => res.redirect('/create-post'))
-  })
+  }
 }
 
 // update an existing post
-exports.edit = (req, res) => {
+exports.edit = async (req, res) => {
   let post = new Post(req.body, req.visitorId, req.params.id)
-  post.update().then((status) => {
-    // post successfully update or validation error
+  try {
+    // post updated either successfully or validation errors
+    const status = await post.update()
     if (status == 'success') {
       // successful post update
       req.flash('success', 'Post successfully updated')
@@ -34,11 +36,11 @@ exports.edit = (req, res) => {
       post.errors.forEach(error => req.flash('errors'))
     }
     req.session.save(() => res.redirect(`/post/${req.params.id}/edit`))
-  }).catch(() => {
+  } catch {
     // post doesn't exist or visitor is not owner of the post to update
     req.flash('errors', 'you do not have persmission to perform that action')
     req.session.save(() => res.redirect('/'))
-  })
+  }
 }
 
 // retrieve a Post with id from Model
@@ -55,7 +57,7 @@ exports.viewSinglePost = async (req, res) => {
 exports.viewEditScreen = async (req, res) => {
   try {
     let post = await Post.findSingleById(req.params.id, req.visitorId)
-    // check user is authored this post
+    // check user authored this post
     if (post.isVisitorOwner) {
       res.render('edit-post', {post: post, title: post.title})
     } else {
@@ -70,49 +72,55 @@ exports.viewEditScreen = async (req, res) => {
 }
 
 // delete a post by its unique id
-exports.delete = (req, res) => {
-  Post.delete(req.params.id, req.visitorId).then(() => {
-    // user owns post that was deleted
+exports.delete = async (req, res) => {
+  try {
+    // delete user's own post
+    await Post.delete(req.params.id, req.visitorId)
     req.flash('success', 'Post successfully deleted')
     req.session.save(() => res.redirect(`/profile/${req.session.user.username}`))
-  }).catch(() => {
+  } catch {
     // user not owner of post to delete
     req.flash('errors', 'you do not have persmission to perform that action')
     req.session.save(() => res.redirect('/'))
-  })
+  }
 }
 
-exports.search = (req, res) => {
-  Post.search(req.body.searchTerm).then(posts => {
+// search for posts
+exports.search = async (req, res) => {
+  try {
+    const posts = await Post.search(req.body.searchTerm)
     res.json(posts)
-  }).catch(() => {
+    
+  } catch {
     res.json([])
-  })
+  }
 }
 
 // ** api methods **
 
 // create post, send request to Model to save post 
-exports.apiCreate = (req, res) => {
+exports.apiCreate = async (req, res) => {
   let post = new Post(req.body, req.apiUser._id)
-  post.create().then(() => {
+  try {
     // save post to database
+    await post.create()
     res.json('Congrats, post saved')
-  }).catch((errors) => {
-    // errors, post not saved
+  } catch (errors) {
     res.json(errors)
-  })
+  }
 }
 
 // delete a post by its unique id
-exports.apiDelete = (req, res) => {
-  Post.delete(req.params.id, req.apiUser._id).then(() => {
+exports.apiDelete = async (req, res) => {
+  
+  try {
     // user owns post that was deleted
+    await Post.delete(req.params.id, req.apiUser._id)
     res.json('Success, post is deleted')
-  }).catch(() => {
+  } catch {
     // error, post not deleted
     res.json('You dont have permission to delete that post')
-  })
+  }
 }
 
 // get all posts by given username

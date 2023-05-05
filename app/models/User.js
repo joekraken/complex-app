@@ -97,30 +97,28 @@ User.prototype.getAvatar = function() {
   this.avatar = `https://gravatar.com/avatar/${md5(this.data.email)}?s=128`
 }
 
-User.findByUsername = function(username) {
-  return new Promise((resolve, reject) => {
-    if (typeof(username) != 'string') {
-      reject()
-      return
-    }
-    usersCollection.findOne({username: username}).then((userDoc) => {
-      // check user exists
-      if (userDoc) {
-        userDoc = new User(userDoc, true) // get user avatar
-        // clean up user doc, remove email & password
-        userDoc = {
-          _id: userDoc.data._id,
-          username: userDoc.data.username,
-          avatar: userDoc.avatar
-        }
-        resolve(userDoc)
-      } else {
-        reject()
+User.findByUsername = async function(username) {
+  if (typeof(username) != 'string') {
+    throw 'Invalid username'
+  }
+  try {
+    let userDoc = await usersCollection.findOne({username: username})
+    // check user exists
+    if (userDoc) {
+      userDoc = new User(userDoc, true) // get user avatar
+      // clean up user doc, remove email & password
+      userDoc = {
+        _id: userDoc.data._id,
+        username: userDoc.data.username,
+        avatar: userDoc.avatar
       }
-    }).catch(() => {
-      reject()
-    })
-  })
+      return userDoc
+    } else {
+      throw 'User not found'
+    }
+  } catch (err) {
+    throw err
+  }
 }
 
 User.doesEmailExist = function(email) {

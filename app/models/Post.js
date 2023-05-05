@@ -34,23 +34,22 @@ Post.prototype.validate = function() {
 }
 
 // save valid post to database
-Post.prototype.create = function() {
-  return new Promise(async (resolve, reject) => {
-    this.cleanUp()
-    this.validate()
-    // if no errors, then save post to database
-    if (!this.errors.length) {
-      // save post to db
-      postsCollection.insertOne(this.data).then((info) => {
-      resolve(info.insertedId)
-      }).catch(() => {
-        this.errors.push('Please try again later')
-        reject(this.errors)
-      })
-    } else {
-      reject(this.errors)
+Post.prototype.create = async function() {
+  this.cleanUp()
+  this.validate()
+  // if no errors, then save post to database
+  if (!this.errors.length) {
+    // save post to db
+    try {
+      const info = await postsCollection.insertOne(this.data)
+      return info.insertedId
+    } catch (err) {
+      this.errors.push('Please try again later')
+      throw this.errors
     }
-  })
+  } else {
+    throw this.errors
+  }
 }
 
 // updated a post, check user/visitor is owner

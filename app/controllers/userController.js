@@ -17,17 +17,17 @@ exports.isLoggedIn = (req, res, next) => {
 }
 
 // login
-exports.login = (req, res) => {
+exports.login = async (req, res) => {
   let user = new User(req.body) // user object model
-  // login returns a Promise
-  user.login().then(function() {
+  try {
+    await user.login()
     // server stores user Session data
     req.session.user = {username: user.data.username, avatar: user.avatar, _id: user.data._id}
     req.session.save(()  => res.redirect('/'))
-  }).catch(function(e) {
+  } catch (e) {
     req.flash('errors', e) // store error messages in Session
     req.session.save(() => res.redirect('/')) // manually save to db, then redirect
-  })
+  }
 }
 
 // logout
@@ -37,30 +37,33 @@ exports.logout = (req, res) => {
 }
 
 // register
-exports.register = (req, res) => {
+exports.register = async (req, res) => {
   let user = new User(req.body) // user object model
-  user.register().then(() => {
+  try {
+    // register a new user
+    await user.register()
+    // store session data
     req.session.user = {username: user.data.username, avatar: user.avatar, _id: user.data._id}
     req.session.save(()  => res.redirect('/'))
-  }).catch((regErrors) => {
+  } catch (errors) {
     // show errors on homepage
-    regErrors.forEach(e => req.flash('regErrors', e))
+    errors.forEach(e => req.flash('regErrors', e))
     req.session.save(() => res.redirect('/'))
-  })
+  }
 }
 
 // check username exists
-exports.doesUsernameExist = function(req, res) {
-  User.findByUsername(req.body.username).then(() => {
-    // return true if name is taken
-    res.json(true)
-  }).catch(() => {
+exports.doesUsernameExist = async (req, res) => {
+  try {
+    await User.findByUsername(req.body.username)
     // return false if name is available
+    res.json(true)
+  } catch {
     res.json(false)
-  })
+  }
 }
 
-exports.doesEmailExist = async function(req, res) {
+exports.doesEmailExist = async (req, res) => {
   let emailExist = await User.doesEmailExist(req.body.email)
   res.json(emailExist)
 }
@@ -79,13 +82,14 @@ exports.home = async (req, res) => {
 }
 
 // check user does exist
-exports.ifUserExists = (req, res, next) => {
-  User.findByUsername(req.params.username).then((userDoc) => {
+exports.ifUserExists = async (req, res, next) => {
+  try {
+    const userDoc = await User.findByUsername(req.params.username)
     req.profileUser = userDoc
     next()
-  }).catch(() => {
+  } catch {
     res.render('404')
-  })
+  }
 }
 
 // change view between user profile data
@@ -114,21 +118,24 @@ exports.sharedProfileData = async (req, res, next) => {
 }
 
 // on user profile list their posts
-exports.profilePostsScreen = (req, res) => {
-  // get posts by author id
-  Post.findByAuthorId(req.profileUser._id).then((posts) => {
-    userProfile = profileDataObj(req, `${req.profileUser.username}'s profile`)
+exports.profilePostsScreen = async function(req, res) {
+  try {
+    // get posts by author id
+    const posts = await Post.findByAuthorId(req.profileUser._id)
+    let userProfile = this.profileDataObj(req, `${req.profileUser.username}'s profile`)
     userProfile.posts = posts
     userProfile.currentPage = 'posts'
     res.render('profile', userProfile)
-  }).catch(() => res.render('404'))
+  } catch {
+    res.render('404')
+  }
 }
 
 // on user profile show which users are following them
 exports.profileFollowersScreen = async (req, res) => {
   try {
-    let followers = await Follow.getFollowersById(req.profileUser._id)
-    userProfile = profileDataObj(req, `${req.profileUser.username}'s followers`)
+    const followers = await Follow.getFollowersById(req.profileUser._id)
+    let userProfile = profileDataObj(req, `${req.profileUser.username}'s followers`)
     userProfile.followers = followers
     userProfile.currentPage = 'followers'
     res.render('profile-followers', userProfile)
@@ -140,8 +147,8 @@ exports.profileFollowersScreen = async (req, res) => {
 // on user profile show other users they follow
 exports.profileFollowingScreen = async (req, res) => {
   try {
-    let following = await Follow.getFollowingById(req.profileUser._id)
-    userProfile = profileDataObj(req, `Followed by ${req.profileUser.username}`)
+    const following = await Follow.getFollowingById(req.profileUser._id)
+    let userProfile = profileDataObj(req, `Followed by ${req.profileUser.username}`)
     userProfile.following = following
     userProfile.currentPage = 'following'
     res.render('profile-following', userProfile)
@@ -176,26 +183,31 @@ exports.apiIsLoggedIn = (req, res, next) => {
 }
 
 // api login
-exports.apiLogin = (req, res) => {
+exports.apiLogin = async (req, res) => {
   let user = new User(req.body) // user object model
-  // login returns a Promise
-  user.login().then(function() {
+
+  try {
+    // login user, req API body must have username and password
+    await user.login()
     const token = jwt.sign(
       {_id:user.data._id},
       process.env.JWTSECRET,
-      {expiresIn: '4h'})
+      {expiresIn: '4h'}
+    )
+    // return generate web token
     res.json(token)
-  }).catch(function() {
+  } catch {
     res.json('failed login')
-  })
+  }
 }
 
 // check username exists
-exports.apiDoesUsernameExist = function(req, res, next) {
-  User.findByUsername(req.params.username).then(() => {
+exports.apiDoesUsernameExist = async (req, res, next) => {
+  try {
+    await User.findByUsername(req.params.username)
     next()
-  }).catch(() => {
+  } catch {
     // invalid username
     res.json("That user does not exist")
-  })
+  }
 }
