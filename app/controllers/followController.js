@@ -1,33 +1,38 @@
 const Follow = require('../models/Follow')
 
 // request to start following a user profile
-exports.addFollow = function(req, res) {
+exports.addFollow = async function(req, res) {
   let follow = new Follow(req.params.username, req.visitorId)
-  follow.create().then(() => {
+  try {
+    await follow.create()
     // following user is successful, go back to user profile
     req.flash('success', `Successfully following ${req.params.username}`)
     req.session.save(() => res.redirect(`/profile/${req.params.username}`))
-  }).catch((errors) => {
+  } catch (errors) {
     // failed, go to homepage
-    errors.forEach(error => {
-      req.flash('errors', error)
-    })
-    req.session.save(() => res.redirect('/'))
-  })
+    this.displayFlashErrors(req, errors)
+  }
 }
 
 // request to remove following a user profile
-exports.removeFollow = function(req, res) {
+exports.removeFollow = async function(req, res) {
   let follow = new Follow(req.params.username, req.visitorId)
-  follow.delete().then(() => {
+  try {
+    await follow.delete()
     // stop following user is successful, go back to user profile
     req.flash('success', `Successfully stopped following ${req.params.username}`)
     req.session.save(() => res.redirect(`/profile/${req.params.username}`))
-  }).catch((errors) => {
+  } catch (errors) {
     // failed, go to homepage
-    errors.forEach(error => {
-      req.flash('errors', error)
-    })
-    req.session.save(() => res.redirect('/'))
+    this.displayFlashErrors(req, errors)
+  }
+}
+
+// ** helper method **
+
+displayFlashErrors = (req, errors) => {
+  errors.forEach(error => {
+    req.flash('errors', error)
   })
+  req.session.save(() => res.redirect('/'))
 }
