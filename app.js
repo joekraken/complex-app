@@ -54,7 +54,7 @@ app.use((req, res, next) => {
   next()
 })
 
-app.use(express.static('app/public'))
+app.use(express.static('public'))
 // setting the views folder locations
 app.set('views', 'app/views')
 // set view template engine
