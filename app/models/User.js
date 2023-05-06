@@ -68,7 +68,6 @@ User.prototype.login = function() {
       reject('Oops! Invalid username and/or password')
     }
   })
-
 }
 
 // register a new user

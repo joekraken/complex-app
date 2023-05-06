@@ -27,7 +27,7 @@ let sessionOptions = session({
   store: MongoStore.create({ client: require('./db')}),
   resave: false,
   saveUninitialized: false,
-  cookie: {maxAge: 1000 * 60 * 60 * 4, httpOnly: true}
+  cookie: {maxAge: 1000 * 60 * 60 * 1, httpOnly: true}
 })
 
 app.use(sessionOptions)

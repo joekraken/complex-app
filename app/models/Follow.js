@@ -76,7 +76,7 @@ Follow.isVisitorFollowing = async function(followedUserId, visitorId) {
 
 // return a list of followers this user is following
 Follow.getFollowersById = function(userId) {
-  return getFollowUsers([
+  return Follow.getFollowUsers([
     {$match: {followedUserId: userId}},
     {$lookup: {from: "users", localField: "authorId", foreignField: "_id", as: "userDoc"}},
   ])
@@ -84,7 +84,7 @@ Follow.getFollowersById = function(userId) {
 
 // return a list of user following this profile-user
 Follow.getFollowingById = function(userId) {
-  return getFollowUsers([
+  return Follow.getFollowUsers([
     {$match: {authorId: userId}},
     {$lookup: {from: "users", localField: "followedUserId", foreignField: "_id", as: "userDoc"}},
   ])
@@ -92,18 +92,18 @@ Follow.getFollowingById = function(userId) {
 
 // return a count of followers for a profile user
 Follow.countFollowersById = function(authorId) {
-  return countFollowUser({followedUserId: authorId})
+  return Follow.countFollowUser({followedUserId: authorId})
 }
 
 // return a count of user following a profile user
 Follow.countFollowingById = function(authorId) {
-  return countFollowUser({authorId: authorId})
+  return Follow.countFollowUser({authorId: authorId})
 }
 
 // ** helper methods **
 // retrieve list of users either followers or following
 // depending on the pipeline argument
-getFollowUsers = function(pipeline) {
+Follow.getFollowUsers = function(pipeline) {
   return new Promise(async (resolve, reject) => {
     try {
       pipeline.push({$project: {
@@ -126,7 +126,7 @@ getFollowUsers = function(pipeline) {
 
 // retrieve count of followers or following users
 // depending on the filter argument
-countFollowUser = function(filter) {
+Follow.countFollowUser = function(filter) {
   return new Promise(async (resolve, reject) => {
     const count = await followsCollection.countDocuments(filter)
     resolve(count)

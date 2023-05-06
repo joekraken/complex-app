@@ -132,10 +132,10 @@ exports.profilePostsScreen = async function(req, res) {
 }
 
 // on user profile show which users are following them
-exports.profileFollowersScreen = async (req, res) => {
+exports.profileFollowersScreen = async function(req, res) {
   try {
     const followers = await Follow.getFollowersById(req.profileUser._id)
-    let userProfile = profileDataObj(req, `${req.profileUser.username}'s followers`)
+    let userProfile = this.profileDataObj(req, `${req.profileUser.username}'s followers`)
     userProfile.followers = followers
     userProfile.currentPage = 'followers'
     res.render('profile-followers', userProfile)
@@ -145,10 +145,10 @@ exports.profileFollowersScreen = async (req, res) => {
 }
 
 // on user profile show other users they follow
-exports.profileFollowingScreen = async (req, res) => {
+exports.profileFollowingScreen = async function(req, res) {
   try {
     const following = await Follow.getFollowingById(req.profileUser._id)
-    let userProfile = profileDataObj(req, `Followed by ${req.profileUser.username}`)
+    let userProfile = this.profileDataObj(req, `Followed by ${req.profileUser.username}`)
     userProfile.following = following
     userProfile.currentPage = 'following'
     res.render('profile-following', userProfile)

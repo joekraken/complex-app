@@ -53,43 +53,40 @@ Post.prototype.create = async function() {
 }
 
 // updated a post, check user/visitor is owner
-Post.prototype.update = function() {
-  return new Promise(async (resolve, reject) => {
-    try {
-      let post = await Post.findSingleById(this.requestedPostId, this.userId)
-      // check user authored the post
-      if (post.isVisitorOwner) {
-        // update database
-        let status = await this.updateDb()
-        resolve(status)
-      } else {
-        // invalid user
-        reject()
-      }
-    } catch {
-      reject()
+Post.prototype.update = async function() {
+  try {
+    let post = await Post.findSingleById(this.requestedPostId, this.userId)
+    // check user authored the post
+    if (post.isVisitorOwner) {
+      // update database
+      let status = await this.updateDb()
+      return status
+    } else {
+      // invalid user
+      throw 'You do not have permission to perform that action'
     }
-  })
+  } catch (err) {
+    throw err
+  }
 }
 
 // send post update to mongo database
-Post.prototype.updateDb = function() {
-  return new Promise(async (resolve, reject) => {
-    this.cleanUp()
-    this.validate()
-    // check validation errors
-    if (!this.errors.length) {
-      // document fields to update
-      const updateDoc = {$set: {title: this.data.title, body: this.data.body}}
-      // request mongo to update
-      await postsCollection.findOneAndUpdate({_id: new ObjectId(this.requestedPostId)}, updateDoc)
-      resolve('success')
-    } else {
-      resolve('failure')
-    }
-  })
+Post.prototype.updateDb = async function() {
+  this.cleanUp()
+  this.validate()
+  // check validation errors
+  if (!this.errors.length) {
+    // document fields to update
+    const updateDoc = {$set: {title: this.data.title, body: this.data.body}}
+    // request mongo to update
+    await postsCollection.findOneAndUpdate({_id: new ObjectId(this.requestedPostId)}, updateDoc)
+    return 'success'
+  } else {
+    return 'failure'
+  }
 }
 
+// list of posts from logged in user is following
 Post.getFeed = async function(currentUserId) {
   // get list of user ids that current user is following
   let followedUsers = await followsCollection.find({authorId: new ObjectId(currentUserId)})
